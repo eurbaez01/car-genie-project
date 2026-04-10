@@ -1,6 +1,6 @@
 """
-Car Price Prediction Model - Script Version
-Converted from the illustrative notebook for production use
+Modelo de Predicción de Precios de Autos - Versión Script
+Convertido del notebook ilustrativo para uso en producción
 """
 
 import pandas as pd
@@ -15,75 +15,75 @@ import pickle
 import os
 import logging
 
-# Set up logging
+# Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Set style for plots
+# Configurar estilo para gráficas
 plt.style.use('default')
 sns.set_palette("husl")
 
 
 def fill_missing_from_make_model(df):
-    """Fill missing values by grouping on make and model"""
-    fill_cols = ['engine', 'transmission', 'fuel_type', 'body_type', 
-                 'drive_train', 'cylinders', 'doors', 'horsepower', 
+    """Rellena valores faltantes agrupando por marca y modelo"""
+    fill_cols = ['engine', 'transmission', 'fuel_type', 'body_type',
+                 'drive_train', 'cylinders', 'doors', 'horsepower',
                  'trim', 'exterior_color', 'condition']
     numeric_cols = ['horsepower', 'cylinders', 'doors', 'city_mpg', 'highway_mpg']
-    
-    print("Filling missing values from make/model groups...")
-    
+
+    print("Rellenando valores faltantes desde grupos marca/modelo...")
+
     for col in fill_cols:
         if col in df.columns and df[col].isnull().any():
             if col in numeric_cols:
-                # Fill with group mean
+                # Rellenar con la media del grupo
                 df[col] = df.groupby(['make', 'model'])[col].transform(
                     lambda x: x.fillna(x.mean()) if not x.isnull().all() else x
                 )
             else:
-                # Fill with group mode
+                # Rellenar con la moda del grupo
                 df[col] = df.groupby(['make', 'model'])[col].transform(
                     lambda x: x.fillna(x.mode()[0]) if len(x.mode()) > 0 and not x.isnull().all() else x
                 )
-                print(f"  Filled {col} with group mode")
-    
-    print("✅ Filled from make/model groups")
+                print(f"  Rellenado {col} con moda del grupo")
+
+    print("✅ Rellenado desde grupos marca/modelo")
     return df
 
 
 def fill_missing_from_make(df):
-    """Fill remaining missing values at make (brand) level"""
-    fill_cols = ['engine', 'transmission', 'fuel_type', 'body_type', 
+    """Rellena los valores faltantes restantes a nivel de marca"""
+    fill_cols = ['engine', 'transmission', 'fuel_type', 'body_type',
                  'drive_train', 'cylinders', 'doors', 'horsepower', 'condition']
     numeric_cols = ['horsepower', 'cylinders', 'doors', 'city_mpg', 'highway_mpg']
-    
-    print("Filling remaining missing values from make level...")
-    
+
+    print("Rellenando valores faltantes restantes desde nivel de marca...")
+
     for col in fill_cols:
         if col in df.columns and df[col].isnull().any():
             if col in numeric_cols:
-                # Fill with make-level mean
+                # Rellenar con la media a nivel de marca
                 df[col] = df.groupby('make')[col].transform(
                     lambda x: x.fillna(x.mean()) if not x.isnull().all() else x
                 )
             else:
-                # Fill with make-level mode
+                # Rellenar con la moda a nivel de marca
                 df[col] = df.groupby('make')[col].transform(
                     lambda x: x.fillna(x.mode()[0]) if len(x.mode()) > 0 and not x.isnull().all() else x
                 )
-                print(f"  Filled {col} with make-level mode")
-    
-    print("✅ Filled from make groups")
+                print(f"  Rellenado {col} con moda a nivel de marca")
+
+    print("✅ Rellenado desde grupos de marca")
     return df
 
 
 def fill_missing_at_global(df):
-    """Fill remaining missing values using global statistics"""
-    fill_cols = ['body_type', 'engine', 'transmission', 'fuel_type', 
+    """Rellena los valores faltantes restantes usando estadísticas globales"""
+    fill_cols = ['body_type', 'engine', 'transmission', 'fuel_type',
                  'drive_train', 'trim', 'condition']
     numeric_cols = ['city_mpg', 'highway_mpg']
-    
-    print("Filling remaining missing values at global level...")
+
+    print("Rellenando valores faltantes restantes a nivel global...")
     
     for col in fill_cols:
         if col in df.columns and df[col].isnull().any():
@@ -102,36 +102,36 @@ def fill_missing_at_global(df):
 
 
 def calculate_derived_columns(df, current_year=2026):
-    """Calculate derived columns (car_age, miles_per_year, market metrics)"""
-    print("Calculating derived columns...")
-    
+    """Calcula columnas derivadas (car_age, miles_per_year, métricas de mercado)"""
+    print("Calculando columnas derivadas...")
+
     if 'car_age' not in df.columns or df['car_age'].isnull().any():
         df['car_age'] = df['car_age'].fillna(current_year - df['year'])
-        print(f"  Calculated car_age = {current_year} - year")
-    
+        print(f"  Calculado car_age = {current_year} - year")
+
     if 'miles_per_year' not in df.columns or df['miles_per_year'].isnull().any():
         df['miles_per_year'] = df['miles_per_year'].fillna(
             df.apply(lambda row: row['miles'] / row['car_age'] if row['car_age'] > 0 else 0, axis=1)
         )
-        print("  Calculated miles_per_year = miles / car_age")
-    
+        print("  Calculado miles_per_year = miles / car_age")
+
     if 'avg_price_model' not in df.columns or df['avg_price_model'].isnull().any():
         avg_price_per_model = df.groupby(['make', 'model'])['price'].transform('mean')
         df['avg_price_model'] = df['avg_price_model'].fillna(avg_price_per_model)
-        print("  Calculated avg_price_model = mean(price) by make/model")
-    
+        print("  Calculado avg_price_model = mean(price) por marca/modelo")
+
     if 'price_vs_market' not in df.columns or df['price_vs_market'].isnull().any():
         df['price_vs_market'] = df['price_vs_market'].fillna(
             df['price'] - df['avg_price_model']
         )
-        print("  Calculated price_vs_market = price - avg_price_model")
-    
+        print("  Calculado price_vs_market = price - avg_price_model")
+
     return df
 
 
 def clean_dataset(df):
-    """Comprehensive dataset cleaning pipeline"""
-    print("Starting comprehensive data cleaning...")
+    """Pipeline completo de limpieza del dataset"""
+    print("Iniciando limpieza exhaustiva de datos...")
     
     df = fill_missing_from_make_model(df)
     df = fill_missing_from_make(df)
@@ -148,8 +148,8 @@ def clean_dataset(df):
 
 
 def create_make_model_mileage_label(df):
-    """Create a composite label: make_model_mileage"""
-    print("Creating make_model_mileage label...")
+    """Crea una etiqueta compuesta: make_model_mileage"""
+    print("Creando etiqueta make_model_mileage...")
     
     df['mileage_range'] = pd.cut(
         df['miles'],
@@ -168,8 +168,8 @@ def create_make_model_mileage_label(df):
 
 
 def create_brand_statistics(df):
-    """Create aggregated statistics by brand (make)"""
-    print("Calculating brand statistics...")
+    """Crea estadísticas agregadas por marca"""
+    print("Calculando estadísticas por marca...")
     
     df['brand_avg_price'] = df['make'].map(df.groupby('make')['price'].mean())
     df['brand_median_price'] = df['make'].map(df.groupby('make')['price'].median())
@@ -181,8 +181,8 @@ def create_brand_statistics(df):
 
 
 def create_year_statistics(df):
-    """Create aggregated statistics by year"""
-    print("Calculating year statistics...")
+    """Crea estadísticas agregadas por año"""
+    print("Calculando estadísticas por año...")
     
     df['year_avg_price'] = df['year'].map(df.groupby('year')['price'].mean())
     df['year_median_price'] = df['year'].map(df.groupby('year')['price'].median())
@@ -192,8 +192,8 @@ def create_year_statistics(df):
 
 
 def create_make_model_statistics(df):
-    """Create aggregated statistics by make and model"""
-    print("Calculating make/model statistics...")
+    """Crea estadísticas agregadas por marca y modelo"""
+    print("Calculando estadísticas por marca/modelo...")
     
     df['model_avg_price'] = df.groupby(['make', 'model'])['price'].transform('mean')
     df['model_median_price'] = df.groupby(['make', 'model'])['price'].transform('median')
@@ -204,8 +204,8 @@ def create_make_model_statistics(df):
 
 
 def create_mileage_range_statistics(df):
-    """Create statistics by mileage ranges"""
-    print("Calculating mileage range statistics...")
+    """Crea estadísticas por rangos de kilometraje"""
+    print("Calculando estadísticas por rango de kilometraje...")
     
     df['mileage_range_avg_price'] = df['mileage_range'].map(
         df.groupby('mileage_range')['price'].mean()
@@ -216,9 +216,9 @@ def create_mileage_range_statistics(df):
 
 
 def create_body_type_features(df):
-    """Create features for different body types (SUVs, Luxury, etc.)"""
-    print("Creating body type classification features...")
-    
+    """Crea características para diferentes tipos de carrocería (SUVs, Lujo, etc.)"""
+    print("Creando características de clasificación por tipo de carrocería...")
+
     suv_types = ['SUV', 'Truck']
     luxury_brands = ['BMW', 'Mercedes-Benz', 'Audi', 'Porsche', 'Jaguar', 'Cadillac', 'Lexus']
     sports_types = ['Sports', 'Coupe', 'Convertible']
@@ -244,8 +244,8 @@ def create_body_type_features(df):
 
 
 def create_price_ratio_features(df):
-    """Create ratio-based features for price analysis"""
-    print("Creating price ratio features...")
+    """Crea características basadas en ratios para el análisis de precios"""
+    print("Creando características de ratio de precio...")
     
     df['price_per_mile'] = df['price'] / (df['miles'] + 1)
     df['price_per_age'] = df['price'] / (df['car_age'] + 0.1)
@@ -255,8 +255,8 @@ def create_price_ratio_features(df):
 
 
 def encode_categorical_features(df):
-    """Encode categorical features using label encoding"""
-    print("Encoding categorical features...")
+    """Codifica características categóricas usando label encoding"""
+    print("Codificando características categóricas...")
     
     categorical_cols = ['make', 'model', 'body_type', 'transmission', 'fuel_type', 
                        'drive_train', 'condition', 'exterior_color', 'trim', 
@@ -275,8 +275,8 @@ def encode_categorical_features(df):
 
 
 def create_all_features(df):
-    """Apply all feature engineering steps"""
-    print("Starting comprehensive feature engineering...")
+    """Aplica todos los pasos de ingeniería de características"""
+    print("Iniciando ingeniería exhaustiva de características...")
     
     df = create_make_model_mileage_label(df)
     df = create_brand_statistics(df)
@@ -292,16 +292,16 @@ def create_all_features(df):
 
 
 def prepare_features(df, target_col='price'):
-    """Prepare features for modeling"""
-    print("Preparing features for modeling...")
-    
-    # Define feature columns (exclude target and non-numeric)
-    exclude_cols = [target_col, 'title', 'url']  # Add any text columns to exclude
+    """Prepara las características para el modelado"""
+    print("Preparando características para el modelado...")
+
+    # Definir columnas de características (excluir objetivo y no numéricas)
+    exclude_cols = [target_col, 'title', 'url']  # Agregar columnas de texto a excluir
     feature_cols = []
-    
+
     for col in df.columns:
         if col not in exclude_cols:
-            # Include numeric columns and encoded categorical columns
+            # Incluir columnas numéricas y categóricas codificadas
             if df[col].dtype in ['int64', 'float64', 'int32', 'float32'] or '_encoded' in col:
                 feature_cols.append(col)
     
@@ -314,7 +314,7 @@ def prepare_features(df, target_col='price'):
 
 
 def train_test_split_data(X, y, test_size=0.2, random_state=42):
-    """Split data into train and test sets"""
+    """Divide los datos en conjuntos de entrenamiento y prueba"""
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=test_size, random_state=random_state
     )
@@ -325,7 +325,7 @@ def train_test_split_data(X, y, test_size=0.2, random_state=42):
 
 
 def train_xgb_model(X_train, y_train, xgb_params=None):
-    """Train XGBoost model"""
+    """Entrena el modelo XGBoost"""
     if xgb_params is None:
         xgb_params = {
             'max_depth': 6,
@@ -348,8 +348,8 @@ def train_xgb_model(X_train, y_train, xgb_params=None):
 
 
 def evaluate_model(model, X_test, y_test):
-    """Evaluate model performance"""
-    print("Evaluating model performance...")
+    """Evalúa el rendimiento del modelo"""
+    print("Evaluando rendimiento del modelo...")
     
     y_pred = model.predict(X_test)
     
@@ -376,7 +376,7 @@ def evaluate_model(model, X_test, y_test):
 
 
 def get_feature_importance(model, feature_cols, top_n=15):
-    """Get feature importance ranking"""
+    """Obtiene el ranking de importancia de características"""
     importance = pd.DataFrame({
         'feature': feature_cols,
         'importance': model.feature_importances_
@@ -390,25 +390,25 @@ def get_feature_importance(model, feature_cols, top_n=15):
 
 
 def make_predictions(model, new_data, feature_cols, encoders):
-    """Make predictions on new car data"""
-    print("Making predictions on new data...")
-    
-    # Apply the same preprocessing and feature engineering
+    """Realiza predicciones sobre nuevos datos de autos"""
+    print("Generando predicciones sobre nuevos datos...")
+
+    # Aplicar el mismo preprocesamiento e ingeniería de características
     new_data_processed = clean_dataset(new_data.copy())
     new_data_processed, _ = create_all_features(new_data_processed)
-    
-    # Ensure all required features are present
+
+    # Asegurar que todas las características requeridas estén presentes
     missing_features = set(feature_cols) - set(new_data_processed.columns)
     if missing_features:
-        print(f"Warning: Missing features: {missing_features}")
-        # Add missing features with default values
+        print(f"Advertencia: Características faltantes: {missing_features}")
+        # Agregar características faltantes con valores por defecto
         for feat in missing_features:
             new_data_processed[feat] = 0
-    
-    # Select only the features used in training
+
+    # Seleccionar solo las características usadas en el entrenamiento
     X_new = new_data_processed[feature_cols]
-    
-    # Make predictions
+
+    # Realizar predicciones
     predictions = model.predict(X_new)
     
     print(f"✅ Generated {len(predictions)} predictions")
@@ -416,14 +416,14 @@ def make_predictions(model, new_data, feature_cols, encoders):
 
 
 def main():
-    """Main modeling pipeline"""
-    
+    """Pipeline principal de modelado"""
+
     print("\n" + "=" * 100)
-    print("CAR PRICE PREDICTION - COMPLETE MODELING PIPELINE")
+    print("PREDICCIÓN DE PRECIOS DE AUTOS - PIPELINE COMPLETO DE MODELADO")
     print("=" * 100)
-    
-    # 1. Load Data
-    print("\n1️⃣  LOADING DATA")
+
+    # 1. Cargar Datos
+    print("\n1️⃣  CARGANDO DATOS")
     print("-" * 100)
     
     data_path = 'data/modeling_data/mexico_cars_complete.csv'
@@ -436,27 +436,27 @@ def main():
     df = pd.read_csv(data_path)
     print(f"✅ Loaded {len(df):,} records with {len(df.columns)} columns")
     
-    # 2. Data Cleaning
-    print("\n2️⃣  DATA CLEANING")
+    # 2. Limpieza de Datos
+    print("\n2️⃣  LIMPIEZA DE DATOS")
     print("-" * 100)
-    
+
     df_clean = clean_dataset(df)
-    
-    # 3. Feature Engineering
-    print("\n3️⃣  FEATURE ENGINEERING")
+
+    # 3. Ingeniería de Características
+    print("\n3️⃣  INGENIERÍA DE CARACTERÍSTICAS")
     print("-" * 100)
-    
+
     df_engineered, encoders = create_all_features(df_clean)
-    
-    # 4. Model Training
-    print("\n4️⃣  MODEL TRAINING")
+
+    # 4. Entrenamiento del Modelo
+    print("\n4️⃣  ENTRENAMIENTO DEL MODELO")
     print("-" * 100)
-    
-    # Prepare features and split data
+
+    # Preparar características y dividir datos
     X, y, feature_cols = prepare_features(df_engineered)
     X_train, X_test, y_train, y_test = train_test_split_data(X, y)
-    
-    # Train model
+
+    # Entrenar modelo
     xgb_params = {
         'max_depth': 6,
         'learning_rate': 0.1,
@@ -471,31 +471,31 @@ def main():
     
     model = train_xgb_model(X_train, y_train, xgb_params)
     
-    # 5. Model Evaluation
-    print("\n5️⃣  MODEL EVALUATION")
+    # 5. Evaluación del Modelo
+    print("\n5️⃣  EVALUACIÓN DEL MODELO")
     print("-" * 100)
     
     metrics = evaluate_model(model, X_test, y_test)
     importance = get_feature_importance(model, feature_cols)
     
-    # 6. Save Results
-    print("\n6️⃣  SAVING RESULTS")
+    # 6. Guardar Resultados
+    print("\n6️⃣  GUARDANDO RESULTADOS")
     print("-" * 100)
-    
-    # Create directories
+
+    # Crear directorios
     os.makedirs('models', exist_ok=True)
     os.makedirs('results', exist_ok=True)
-    
-    # Save model
+
+    # Guardar modelo
     with open('models/car_price_xgb_model.pkl', 'wb') as f:
         pickle.dump(model, f)
     print("✅ Model saved: models/car_price_xgb_model.pkl")
     
-    # Save feature importance
+    # Guardar importancia de características
     importance.to_csv('results/feature_importance.csv', index=False)
-    print("✅ Feature importance saved: results/feature_importance.csv")
-    
-    # Save predictions
+    print("✅ Importancia de características guardada: results/feature_importance.csv")
+
+    # Guardar predicciones
     predictions_df = pd.DataFrame({
         'actual_price': y_test.values,
         'predicted_price': metrics['y_pred'],
@@ -506,7 +506,7 @@ def main():
     predictions_df.to_csv('results/model_predictions.csv', index=False)
     print("✅ Predictions saved: results/model_predictions.csv")
     
-    # Save metrics
+    # Guardar métricas
     metrics_summary = {
         'MAE': metrics['MAE'],
         'RMSE': metrics['RMSE'],
@@ -521,21 +521,21 @@ def main():
     pd.DataFrame([metrics_summary]).to_csv('results/model_metrics.csv', index=False)
     print("✅ Metrics saved: results/model_metrics.csv")
     
-    # 7. Summary
-    print("\n7️⃣  SUMMARY")
+    # 7. Resumen
+    print("\n7️⃣  RESUMEN")
     print("-" * 100)
     print(f"""
-    ✨ MODELING COMPLETE!
-    
-    Dataset: {len(df):,} records with {len(df_engineered.columns)} engineered features
-    
-    Model Performance:
+    ✨ ¡MODELADO COMPLETO!
+
+    Dataset: {len(df):,} registros con {len(df_engineered.columns)} características engineered
+
+    Rendimiento del Modelo:
       • MAE:  ${metrics['MAE']:,.2f}
       • RMSE: ${metrics['RMSE']:,.2f}
       • R²:   {metrics['R2']:.4f}
       • MAPE: {metrics['MAPE']:.2f}%
-    
-    Files Generated:
+
+    Archivos Generados:
       ✅ models/car_price_xgb_model.pkl
       ✅ results/feature_importance.csv
       ✅ results/model_predictions.csv

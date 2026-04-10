@@ -1,6 +1,6 @@
 """
-Car Price Prediction - Complete Modeling Example
-Demonstrates the full pipeline from data loading to model training and evaluation
+Predicción de Precios de Autos - Ejemplo Completo de Modelado
+Demuestra el pipeline completo desde la carga de datos hasta el entrenamiento y evaluación del modelo
 """
 
 import pandas as pd
@@ -8,7 +8,7 @@ import numpy as np
 import sys
 import os
 
-# Add utils to path
+# Agregar utils al path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from utils import (
@@ -29,14 +29,14 @@ logger = logging.getLogger(__name__)
 
 
 def main():
-    """Main modeling pipeline"""
-    
+    """Pipeline principal de modelado"""
+
     print("\n" + "=" * 100)
-    print("CAR PRICE PREDICTION - COMPLETE MODELING PIPELINE")
+    print("PREDICCIÓN DE PRECIOS DE AUTOS - PIPELINE COMPLETO DE MODELADO")
     print("=" * 100)
-    
-    # 1. Load Data
-    print("\n1️⃣  LOADING DATA")
+
+    # 1. Cargar Datos
+    print("\n1️⃣  CARGANDO DATOS")
     print("-" * 100)
     
     data_path = 'data/modeling_data/mexico_cars_complete.csv'
@@ -49,8 +49,8 @@ def main():
     df = pd.read_csv(data_path)
     print(f"✅ Loaded {len(df):,} records with {len(df.columns)} columns")
     
-    # 2. Data Summary
-    print("\n2️⃣  DATA SUMMARY")
+    # 2. Resumen de Datos
+    print("\n2️⃣  RESUMEN DE DATOS")
     print("-" * 100)
     
     summary = get_data_summary(df)
@@ -60,8 +60,8 @@ def main():
     print(f"Numeric columns: {len(summary['numeric_columns'])}")
     print(f"Categorical columns: {len(summary['categorical_columns'])}")
     
-    # 3. Data Info
-    print("\n3️⃣  KEY STATISTICS")
+    # 3. Info de Datos
+    print("\n3️⃣  ESTADÍSTICAS CLAVE")
     print("-" * 100)
     
     print(f"Price Range:     ${df['price'].min():>12,.0f} - ${df['price'].max():>12,.0f} (avg: ${df['price'].mean():12,.0f})")
@@ -72,11 +72,11 @@ def main():
     for i, (brand, count) in enumerate(df['make'].value_counts().head(5).items(), 1):
         print(f"  {i}. {brand:20s} {count:4d} records ({count/len(df)*100:5.1f}%)")
     
-    # 4. Run Full Pipeline
-    print("\n4️⃣  RUNNING FULL MODELING PIPELINE")
+    # 4. Ejecutar Pipeline Completo
+    print("\n4️⃣  EJECUTANDO PIPELINE COMPLETO DE MODELADO")
     print("-" * 100)
-    
-    # XGBoost Parameters
+
+    # Parámetros de XGBoost
     xgb_params = {
         'max_depth': 6,
         'learning_rate': 0.1,
@@ -95,8 +95,8 @@ def main():
         xgb_params=xgb_params
     )
     
-    # 5. Results
-    print("\n5️⃣  MODEL RESULTS")
+    # 5. Resultados
+    print("\n5️⃣  RESULTADOS DEL MODELO")
     print("-" * 100)
     
     print(f"\n📊 Performance Metrics:")
@@ -105,8 +105,8 @@ def main():
     print(f"  R² Score:                         {metrics['R2']:>14.4f}")
     print(f"  MAPE (Mean Absolute % Error):     {metrics['MAPE']:>13.2f}%")
     
-    # 6. Feature Statistics
-    print("\n6️⃣  FEATURE STATISTICS")
+    # 6. Estadísticas de Características
+    print("\n6️⃣  ESTADÍSTICAS DE CARACTERÍSTICAS")
     print("-" * 100)
     
     feature_stats = engineer.get_feature_importance_data()
@@ -133,8 +133,8 @@ def main():
             avg_price = row[('price', 'mean')]
             print(f"  {int(year)} Avg Price: ${avg_price:>12,.0f}")
     
-    # 7. Save Model
-    print("\n7️⃣  SAVING MODEL")
+    # 7. Guardar Modelo
+    print("\n7️⃣  GUARDANDO MODELO")
     print("-" * 100)
     
     model_path = 'models/car_price_xgb_model.pkl'
@@ -142,15 +142,15 @@ def main():
     model.save_model(model_path)
     print(f"✅ Model saved: {model_path}")
     
-    # 8. Feature Importance Export
-    print("\n8️⃣  EXPORTING RESULTS")
+    # 8. Exportar Importancia de Características
+    print("\n8️⃣  EXPORTANDO RESULTADOS")
     print("-" * 100)
-    
-    # Save feature importance
+
+    # Guardar importancia de características
     importance.to_csv('results/feature_importance.csv', index=False)
     print(f"✅ Feature importance saved: results/feature_importance.csv")
     
-    # Save predictions
+    # Guardar predicciones
     predictions_df = pd.DataFrame({
         'actual_price': model.y_test.values,
         'predicted_price': metrics['y_pred'],
@@ -162,7 +162,7 @@ def main():
     predictions_df.to_csv('results/model_predictions.csv', index=False)
     print(f"✅ Predictions saved: results/model_predictions.csv")
     
-    # Save metrics
+    # Guardar métricas
     metrics_summary = {
         'MAE': metrics['MAE'],
         'RMSE': metrics['RMSE'],
@@ -178,30 +178,30 @@ def main():
     metrics_df.to_csv('results/model_metrics.csv', index=False)
     print(f"✅ Metrics saved: results/model_metrics.csv")
     
-    # 9. Summary
-    print("\n9️⃣  SUMMARY")
+    # 9. Resumen
+    print("\n9️⃣  RESUMEN")
     print("-" * 100)
     print(f"""
-    ✨ MODELING COMPLETE!
-    
-    Dataset: {len(df):,} records with {len(engineer.df.columns)} engineered features
-    
-    Model Performance:
+    ✨ ¡MODELADO COMPLETO!
+
+    Dataset: {len(df):,} registros con {len(engineer.df.columns)} características engineered
+
+    Rendimiento del Modelo:
       • MAE:  ${metrics['MAE']:,.2f}
       • RMSE: ${metrics['RMSE']:,.2f}
       • R²:   {metrics['R2']:.4f}
       • MAPE: {metrics['MAPE']:.2f}%
-    
-    Files Generated:
+
+    Archivos Generados:
       ✅ models/car_price_xgb_model.pkl
       ✅ results/feature_importance.csv
       ✅ results/model_predictions.csv
       ✅ results/model_metrics.csv
-    
-    Next Steps:
-      • Use model.make_prediction() for new car predictions
-      • Analyze feature_importance.csv for key drivers
-      • Check model_predictions.csv for error analysis
+
+    Próximos Pasos:
+      • Usar model.make_prediction() para nuevas predicciones de autos
+      • Analizar feature_importance.csv para identificar variables clave
+      • Revisar model_predictions.csv para análisis de errores
     """)
     
     print("=" * 100 + "\n")

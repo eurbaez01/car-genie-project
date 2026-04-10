@@ -1,17 +1,17 @@
 """
-Generate estimated retail (MSRP) prices for every car in the inventory.
+Genera precios de lista (MSRP) estimados para cada auto en el inventario.
 
-Uses a brand/year/body-type formula adapted from the project's Colab notebook.
-Base prices are in USD and converted to MXN at 18 MXN/USD.
-Results are saved to data/modeling_data/car_retail_prices.csv.
+Utiliza una fórmula de marca/año/tipo de carrocería adaptada del notebook de Colab del proyecto.
+Los precios base están en USD y se convierten a MXN a 18 MXN/USD.
+Los resultados se guardan en data/modeling_data/car_retail_prices.csv.
 """
 
 import pandas as pd
 import numpy as np
 
-USD_TO_MXN = 18.0   # approximate exchange rate
+USD_TO_MXN = 18.0   # tipo de cambio aproximado
 
-# Brand base prices in USD (from project notebook)
+# Precios base por marca en USD (del notebook del proyecto)
 BRAND_BASE_USD = {
     'Kia':           25_000,
     'Audi':          40_000,
@@ -24,7 +24,7 @@ BRAND_BASE_USD = {
     'Lexus':         48_000,
     'Volvo':         47_000,
     'Porsche':       70_000,
-    # ── Additional brands in the inventory ──
+    # ── Marcas adicionales en el inventario ──
     'Mitsubishi':    24_000,
     'Ford':          28_000,
     'RAM':           35_000,
@@ -55,7 +55,7 @@ BODY_ADJUSTMENT_USD = {
 
 
 def generate_msrp_mxn(row) -> float:
-    """Estimate MSRP in MXN for a single inventory row."""
+    """Estima el precio de lista (MSRP) en MXN para una fila del inventario."""
     base_usd  = BRAND_BASE_USD.get(row['make'], DEFAULT_BASE_USD)
     year_factor = 1 + (int(row['year']) - 2015) * 0.03
     body_adj  = BODY_ADJUSTMENT_USD.get(row.get('body_type', ''), 0)
@@ -69,7 +69,7 @@ if __name__ == '__main__':
 
     df['msrp'] = df.apply(generate_msrp_mxn, axis=1)
 
-    # Keep one row per unique make/model/year/body_type — use median msrp
+    # Conservar una fila por combinación única marca/modelo/año/tipo_carrocería — usar mediana del msrp
     retail = (
         df.groupby(['make', 'model', 'year', 'body_type'])['msrp']
         .median()
@@ -78,7 +78,7 @@ if __name__ == '__main__':
     )
     retail['source'] = 'formula_estimate'
 
-    # Overlay with 0-mile listings from the actual inventory (more accurate)
+    # Superponer con listados de 0 km del inventario real (más preciso)
     zero_mile = df[df['miles'] == 0].copy()
     if len(zero_mile):
         zm_median = (
@@ -89,7 +89,7 @@ if __name__ == '__main__':
         )
         zm_median['source'] = 'zero_mile_inventory'
 
-        # Merge: prefer zero-mile over formula
+        # Merge: preferir 0 km sobre la fórmula
         retail = retail.merge(
             zm_median, on=['make', 'model', 'year', 'body_type'],
             how='left', suffixes=('_formula', '_inventory')

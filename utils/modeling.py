@@ -1,6 +1,6 @@
 """
-Modeling Utilities
-Feature engineering and XGBoost model for car price prediction
+Utilidades de Modelado
+Ingeniería de características y modelo XGBoost para la predicción de precios de autos
 """
 
 import pandas as pd
@@ -17,14 +17,14 @@ logger = logging.getLogger(__name__)
 
 
 class CarPriceFeatureEngineer:
-    """Feature engineering for car price prediction"""
-    
+    """Ingeniería de características para la predicción de precios de autos"""
+
     def __init__(self, df):
         """
-        Initialize feature engineer
-        
+        Inicializa el ingeniero de características
+
         Args:
-            df: Input DataFrame
+            df: DataFrame de entrada
         """
         self.df = df.copy()
         self.encoders = {}
@@ -34,22 +34,22 @@ class CarPriceFeatureEngineer:
     
     def create_make_model_mileage_label(self):
         """
-        Create a composite label: make_model_mileage
-        Groups cars by make, model, and mileage range
-        
+        Crea una etiqueta compuesta: make_model_mileage
+        Agrupa autos por marca, modelo y rango de kilometraje
+
         Returns:
-            DataFrame: With new make_model_mileage column
+            DataFrame: Con la nueva columna make_model_mileage
         """
-        logger.info("Creating make_model_mileage label...")
-        
-        # Create mileage bins
+        logger.info("Creando etiqueta make_model_mileage...")
+
+        # Crear bins de kilometraje
         self.df['mileage_range'] = pd.cut(
             self.df['miles'],
             bins=[0, 20000, 50000, 100000, 150000, 250000],
             labels=['0-20k', '20-50k', '50-100k', '100-150k', '150k+']
         )
         
-        # Create composite label
+        # Crear etiqueta compuesta
         self.df['make_model_mileage'] = (
             self.df['make'] + '_' + 
             self.df['model'].str.replace(' ', '_') + '_' + 
@@ -60,9 +60,9 @@ class CarPriceFeatureEngineer:
         return self.df
     
     def create_brand_statistics(self):
-        """Create aggregated statistics by brand (make)"""
-        logger.info("Calculating brand statistics...")
-        
+        """Crea estadísticas agregadas por marca"""
+        logger.info("Calculando estadísticas por marca...")
+
         brand_stats = self.df.groupby('make').agg({
             'price': ['mean', 'median', 'std', 'count'],
             'miles': 'mean',
@@ -74,7 +74,7 @@ class CarPriceFeatureEngineer:
         
         self.feature_stats['by_brand'] = brand_stats
         
-        # Add as features to dataframe
+        # Agregar como características al dataframe
         self.df['brand_avg_price'] = self.df['make'].map(
             self.df.groupby('make')['price'].mean()
         )
@@ -92,9 +92,9 @@ class CarPriceFeatureEngineer:
         return self.df
     
     def create_year_statistics(self):
-        """Create aggregated statistics by year"""
-        logger.info("Calculating year statistics...")
-        
+        """Crea estadísticas agregadas por año"""
+        logger.info("Calculando estadísticas por año...")
+
         year_stats = self.df.groupby('year').agg({
             'price': ['mean', 'median'],
             'miles': 'mean',
@@ -104,7 +104,7 @@ class CarPriceFeatureEngineer:
         
         self.feature_stats['by_year'] = year_stats
         
-        # Add as features
+        # Agregar como características
         self.df['year_avg_price'] = self.df['year'].map(
             self.df.groupby('year')['price'].mean()
         )
@@ -116,8 +116,8 @@ class CarPriceFeatureEngineer:
         return self.df
     
     def create_make_model_statistics(self):
-        """Create aggregated statistics by make and model"""
-        logger.info("Calculating make/model statistics...")
+        """Crea estadísticas agregadas por marca y modelo"""
+        logger.info("Calculando estadísticas por marca/modelo...")
         
         model_stats = self.df.groupby(['make', 'model']).agg({
             'price': ['mean', 'median', 'std'],
@@ -139,8 +139,8 @@ class CarPriceFeatureEngineer:
         return self.df
     
     def create_mileage_range_statistics(self):
-        """Create statistics by mileage ranges"""
-        logger.info("Calculating mileage range statistics...")
+        """Crea estadísticas por rangos de kilometraje"""
+        logger.info("Calculando estadísticas por rango de kilometraje...")
         
         mileage_stats = self.df.groupby('mileage_range').agg({
             'price': ['mean', 'median', 'std', 'count'],
@@ -159,22 +159,22 @@ class CarPriceFeatureEngineer:
         return self.df
     
     def create_body_type_features(self):
-        """Create features for different body types (SUVs, Luxury, etc.)"""
-        logger.info("Creating body type classification features...")
-        
-        # Define body type categories
+        """Crea características para diferentes tipos de carrocería (SUVs, Lujo, etc.)"""
+        logger.info("Creando características de clasificación por tipo de carrocería...")
+
+        # Definir categorías de tipo de carrocería
         suv_types = ['SUV', 'Truck']
         luxury_brands = ['BMW', 'Mercedes-Benz', 'Audi', 'Porsche', 'Jaguar', 'Cadillac', 'Lexus']
         sports_types = ['Sports', 'Coupe', 'Convertible']
-        
-        # Create binary features
+
+        # Crear características binarias
         self.df['is_suv'] = self.df['body_type'].isin(suv_types).astype(int)
         self.df['is_luxury_brand'] = self.df['make'].isin(luxury_brands).astype(int)
         self.df['is_sports'] = self.df['body_type'].isin(sports_types).astype(int)
         self.df['is_sedan'] = (self.df['body_type'] == 'Sedan').astype(int)
         self.df['is_hatchback'] = (self.df['body_type'] == 'Hatchback').astype(int)
         
-        # Calculate average prices for each category
+        # Calcular precios promedio para cada categoría
         self.df['suv_avg_price'] = self.df['is_suv'].map({
             1: self.df[self.df['is_suv'] == 1]['price'].mean(),
             0: self.df[self.df['is_suv'] == 0]['price'].mean()
@@ -189,21 +189,21 @@ class CarPriceFeatureEngineer:
         return self.df
     
     def create_price_ratio_features(self):
-        """Create ratio-based features for price analysis"""
-        logger.info("Creating price ratio features...")
-        
-        # Price to miles ratio
+        """Crea características basadas en ratios para el análisis de precios"""
+        logger.info("Creando características de ratio de precio...")
+
+        # Ratio precio / kilometraje
         self.df['price_per_mile'] = self.df['price'] / (self.df['miles'] + 1)
-        
-        # Price to age ratio
+
+        # Ratio precio / antigüedad
         self.df['price_per_age'] = self.df['price'] / (self.df['car_age'] + 0.1)
-        
-        # Price deviation from brand average (as percentage)
+
+        # Desviación del precio respecto al promedio de la marca (en porcentaje)
         self.df['price_pct_from_brand'] = (
             (self.df['price'] - self.df['brand_avg_price']) / self.df['brand_avg_price'] * 100
         )
         
-        # Price deviation from model average
+        # Desviación del precio respecto al promedio del modelo
         self.df['price_pct_from_model'] = (
             (self.df['price'] - self.df['model_avg_price']) / self.df['model_avg_price'] * 100
         )
@@ -213,10 +213,10 @@ class CarPriceFeatureEngineer:
     
     def encode_categorical_features(self, categorical_cols=None):
         """
-        Encode categorical features
-        
+        Codifica características categóricas
+
         Args:
-            categorical_cols: List of categorical columns to encode
+            categorical_cols: Lista de columnas categóricas a codificar
         """
         if categorical_cols is None:
             categorical_cols = ['make', 'model', 'body_type', 'fuel_type', 
@@ -236,8 +236,8 @@ class CarPriceFeatureEngineer:
         return self.df
     
     def create_all_features(self):
-        """Create all engineered features"""
-        logger.info("Creating all engineered features...")
+        """Crea todas las características engineered"""
+        logger.info("Creando todas las características engineered...")
         
         self.create_make_model_mileage_label()
         self.create_brand_statistics()
@@ -252,21 +252,21 @@ class CarPriceFeatureEngineer:
         return self.df
     
     def get_feature_importance_data(self):
-        """Get feature statistics for analysis"""
+        """Obtiene estadísticas de características para análisis"""
         return self.feature_stats
 
 
 class CarPriceXGBModel:
-    """XGBoost model for car price prediction"""
-    
+    """Modelo XGBoost para la predicción de precios de autos"""
+
     def __init__(self, target='price', test_size=0.2, random_state=42):
         """
-        Initialize XGBoost model
-        
+        Inicializa el modelo XGBoost
+
         Args:
-            target: Target column name
-            test_size: Test set size
-            random_state: Random state for reproducibility
+            target: Nombre de la columna objetivo
+            test_size: Tamaño del conjunto de prueba
+            random_state: Semilla aleatoria para reproducibilidad
         """
         self.target = target
         self.test_size = test_size
@@ -281,30 +281,30 @@ class CarPriceXGBModel:
     
     def prepare_features(self, df, feature_cols=None):
         """
-        Prepare features for modeling
-        
+        Prepara las características para el modelado
+
         Args:
-            df: Input DataFrame with engineered features
-            feature_cols: List of feature columns to use
-        
+            df: DataFrame de entrada con características engineered
+            feature_cols: Lista de columnas de características a usar
+
         Returns:
-            X, y: Features and target
+            X, y: Características y objetivo
         """
-        logger.info("Preparing features for modeling...")
-        
+        logger.info("Preparando características para el modelado...")
+
         if feature_cols is None:
-            # Use all numeric columns except target and identifiers
-            exclude_cols = [self.target, 'make_model_mileage', 'mileage_range', 
+            # Usar todas las columnas numéricas excepto objetivo e identificadores
+            exclude_cols = [self.target, 'make_model_mileage', 'mileage_range',
                            'id', 'title', 'vin', 'data_source', 'currency', 'state', 'city']
-            feature_cols = [col for col in df.columns 
+            feature_cols = [col for col in df.columns
                           if df[col].dtype in [np.int64, np.float64]
                           and col not in exclude_cols
                           and col != self.target]
-        
+
         X = df[feature_cols].copy()
         y = df[self.target].copy()
-        
-        # Handle any remaining NaN values
+
+        # Manejar valores NaN restantes
         X = X.fillna(X.mean())
         
         logger.info(f"Using {len(feature_cols)} features for modeling")
@@ -314,13 +314,13 @@ class CarPriceXGBModel:
     
     def train_test_split_data(self, X, y):
         """
-        Split data into train and test sets
-        
+        Divide los datos en conjuntos de entrenamiento y prueba
+
         Args:
-            X: Features
-            y: Target
+            X: Características
+            y: Objetivo
         """
-        logger.info(f"Splitting data: {self.test_size*100:.1f}% test set...")
+        logger.info(f"Dividiendo datos: {self.test_size*100:.1f}% conjunto de prueba...")
         
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
             X, y, test_size=self.test_size, random_state=self.random_state
@@ -331,12 +331,12 @@ class CarPriceXGBModel:
     
     def train_model(self, X_train=None, y_train=None, **xgb_params):
         """
-        Train XGBoost model
-        
+        Entrena el modelo XGBoost
+
         Args:
-            X_train: Training features (uses self.X_train if None)
-            y_train: Training target (uses self.y_train if None)
-            **xgb_params: XGBoost parameters
+            X_train: Características de entrenamiento (usa self.X_train si es None)
+            y_train: Objetivo de entrenamiento (usa self.y_train si es None)
+            **xgb_params: Parámetros de XGBoost
         """
         if X_train is None:
             X_train = self.X_train
@@ -345,7 +345,7 @@ class CarPriceXGBModel:
         
         logger.info("Training XGBoost model...")
         
-        # Default XGBoost parameters
+        # Parámetros por defecto de XGBoost
         default_params = {
             'objective': 'reg:squarederror',
             'max_depth': 5,
@@ -358,7 +358,7 @@ class CarPriceXGBModel:
             'n_jobs': -1
         }
         
-        # Update with provided parameters
+        # Actualizar con los parámetros proporcionados
         default_params.update(xgb_params)
         
         self.model = xgb.XGBRegressor(**default_params)
@@ -368,14 +368,14 @@ class CarPriceXGBModel:
     
     def evaluate_model(self, X_test=None, y_test=None):
         """
-        Evaluate model performance
-        
+        Evalúa el rendimiento del modelo
+
         Args:
-            X_test: Test features (uses self.X_test if None)
-            y_test: Test target (uses self.y_test if None)
-        
+            X_test: Características de prueba (usa self.X_test si es None)
+            y_test: Objetivo de prueba (usa self.y_test si es None)
+
         Returns:
-            dict: Evaluation metrics
+            dict: Métricas de evaluación
         """
         if X_test is None:
             X_test = self.X_test
@@ -390,7 +390,7 @@ class CarPriceXGBModel:
         rmse = np.sqrt(mean_squared_error(y_test, y_pred))
         r2 = r2_score(y_test, y_pred)
         
-        # Calculate MAPE (Mean Absolute Percentage Error)
+        # Calcular MAPE (Error Porcentual Absoluto Medio)
         mape = np.mean(np.abs((y_test - y_pred) / y_test)) * 100
         
         self.metrics = {
@@ -411,16 +411,16 @@ class CarPriceXGBModel:
     
     def get_feature_importance(self, top_n=15):
         """
-        Get feature importance from the model
-        
+        Obtiene la importancia de características del modelo
+
         Args:
-            top_n: Number of top features to return
-        
+            top_n: Número de características principales a retornar
+
         Returns:
-            DataFrame: Feature importance ranking
+            DataFrame: Ranking de importancia de características
         """
         if self.model is None:
-            logger.warning("Model not trained yet!")
+            logger.warning("¡El modelo aún no ha sido entrenado!")
             return None
         
         importance = pd.DataFrame({
@@ -436,17 +436,17 @@ class CarPriceXGBModel:
     
     def make_prediction(self, sample_df, feature_cols):
         """
-        Make price prediction for new samples
-        
+        Realiza predicciones de precio para nuevas muestras
+
         Args:
-            sample_df: DataFrame with features
-            feature_cols: List of feature columns
-        
+            sample_df: DataFrame con características
+            feature_cols: Lista de columnas de características
+
         Returns:
-            np.array: Predictions
+            np.array: Predicciones
         """
         if self.model is None:
-            logger.warning("Model not trained yet!")
+            logger.warning("¡El modelo aún no ha sido entrenado!")
             return None
         
         X_sample = sample_df[feature_cols].fillna(sample_df[feature_cols].mean())
@@ -455,9 +455,9 @@ class CarPriceXGBModel:
         return predictions
     
     def save_model(self, filepath):
-        """Save model to file"""
+        """Guarda el modelo en un archivo"""
         if self.model is None:
-            logger.warning("Model not trained yet!")
+            logger.warning("¡El modelo aún no ha sido entrenado!")
             return
         
         with open(filepath, 'wb') as f:
@@ -465,7 +465,7 @@ class CarPriceXGBModel:
         logger.info(f"✅ Model saved to {filepath}")
     
     def load_model(self, filepath):
-        """Load model from file"""
+        """Carga el modelo desde un archivo"""
         with open(filepath, 'rb') as f:
             self.model = pickle.load(f)
         logger.info(f"✅ Model loaded from {filepath}")
@@ -473,30 +473,30 @@ class CarPriceXGBModel:
 
 def full_modeling_pipeline(df, test_size=0.2, xgb_params=None):
     """
-    Complete modeling pipeline from feature engineering to evaluation
-    
+    Pipeline completo de modelado desde ingeniería de características hasta evaluación
+
     Args:
-        df: Input DataFrame
-        test_size: Test set size
-        xgb_params: XGBoost parameters
-    
+        df: DataFrame de entrada
+        test_size: Tamaño del conjunto de prueba
+        xgb_params: Parámetros de XGBoost
+
     Returns:
         tuple: (feature_engineer, model, metrics)
     """
     logger.info("=" * 80)
-    logger.info("STARTING COMPLETE MODELING PIPELINE")
+    logger.info("INICIANDO PIPELINE COMPLETO DE MODELADO")
     logger.info("=" * 80)
-    
-    # Feature Engineering
+
+    # Ingeniería de Características
     engineer = CarPriceFeatureEngineer(df)
     df_engineered = engineer.create_all_features()
-    
-    # Model Preparation
+
+    # Preparación del Modelo
     model = CarPriceXGBModel(target='price', test_size=test_size)
     X, y, feature_cols = model.prepare_features(df_engineered)
     model.train_test_split_data(X, y)
-    
-    # Model Training
+
+    # Entrenamiento del Modelo
     if xgb_params is None:
         xgb_params = {
             'max_depth': 6,
@@ -508,19 +508,19 @@ def full_modeling_pipeline(df, test_size=0.2, xgb_params=None):
     
     model.train_model(**xgb_params)
     
-    # Model Evaluation
+    # Evaluación del Modelo
     metrics = model.evaluate_model()
-    
-    # Feature Importance
+
+    # Importancia de Características
     importance = model.get_feature_importance(top_n=15)
-    
+
     logger.info("=" * 80)
-    logger.info("✅ MODELING PIPELINE COMPLETE!")
+    logger.info("✅ ¡PIPELINE DE MODELADO COMPLETO!")
     logger.info("=" * 80)
     
     return engineer, model, metrics, importance
 
 
 if __name__ == "__main__":
-    print("Modeling Utilities Module")
-    print("Import this module and use the classes for car price prediction")
+    print("Módulo de Utilidades de Modelado")
+    print("Importa este módulo y usa las clases para la predicción de precios de autos")

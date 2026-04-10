@@ -1,6 +1,6 @@
 """
-Car Recommendation System using Claude API
-Provides AI-powered personalized car recommendations based on client preferences
+Sistema de Recomendación de Autos con la API de Claude
+Proporciona recomendaciones personalizadas de autos impulsadas por IA basadas en las preferencias del cliente
 """
 
 import os
@@ -16,16 +16,16 @@ logger = logging.getLogger(__name__)
 
 class CarRecommender:
     """
-    AI-powered car recommendation system using Claude API
+    Sistema de recomendación de autos impulsado por IA usando la API de Claude
     """
 
     def __init__(self, api_key: Optional[str] = None, car_data_path: str = "data/modeling_data/mexico_cars_complete.csv"):
         """
-        Initialize the car recommender
+        Inicializa el recomendador de autos
 
         Args:
-            api_key: Anthropic API key (if None, uses environment variable)
-            car_data_path: Path to car dataset
+            api_key: Clave de API de Anthropic (si es None, usa la variable de entorno)
+            car_data_path: Ruta al dataset de autos
         """
         self.api_key = api_key or os.getenv('ANTHROPIC_API_KEY')
         if not self.api_key:
@@ -33,7 +33,7 @@ class CarRecommender:
 
         self.client = Anthropic(api_key=self.api_key)
 
-        # Load car data
+        # Cargar datos de autos
         try:
             self.car_data = pd.read_csv(car_data_path)
             logger.info(f"Loaded {len(self.car_data)} cars from {car_data_path}")
@@ -41,11 +41,11 @@ class CarRecommender:
             logger.warning(f"Car data file not found: {car_data_path}")
             self.car_data = pd.DataFrame()
 
-        # Load depreciation estimator for value analysis
+        # Cargar estimador de depreciación para análisis de valor
         self.depreciation_data = self._load_depreciation_data()
 
     def _load_depreciation_data(self) -> Dict[str, Any]:
-        """Load depreciation analysis data for recommendations"""
+        """Carga datos de análisis de depreciación para las recomendaciones"""
         try:
             from modeling_components.car_depreciation_estimator import CarDepreciationEstimator
             estimator = CarDepreciationEstimator(self.car_data)
@@ -63,24 +63,24 @@ class CarRecommender:
                               max_recommendations: int = 3,
                               include_value_analysis: bool = True) -> Dict[str, Any]:
         """
-        Get personalized car recommendations using Claude AI
+        Obtiene recomendaciones personalizadas de autos usando Claude AI
 
         Args:
-            client_profile: Dictionary with client preferences
-            max_recommendations: Maximum number of recommendations to return
-            include_value_analysis: Whether to include depreciation analysis
+            client_profile: Diccionario con preferencias del cliente
+            max_recommendations: Número máximo de recomendaciones a retornar
+            include_value_analysis: Si se debe incluir análisis de depreciación
 
         Returns:
-            Dictionary with recommendations and analysis
+            Diccionario con recomendaciones y análisis
         """
-        # Prepare context data
+        # Preparar datos de contexto
         market_context = self._prepare_market_context(client_profile)
 
-        # Create Claude prompt
+        # Crear prompt para Claude
         prompt = self._create_recommendation_prompt(client_profile, market_context, max_recommendations)
 
         try:
-            # Call Claude API
+            # Llamar a la API de Claude
             response = self.client.messages.create(
                 model="claude-sonnet-4-6",
                 max_tokens=2000,
@@ -93,7 +93,7 @@ class CarRecommender:
 
             recommendations = self._parse_claude_response(response.content[0].text)
 
-            # Add value analysis if requested
+            # Agregar análisis de valor si se solicita
             if include_value_analysis and recommendations:
                 recommendations = self._add_value_analysis(recommendations, client_profile)
 
@@ -113,16 +113,16 @@ class CarRecommender:
             }
 
     def _prepare_market_context(self, client_profile: Dict[str, Any]) -> Dict[str, Any]:
-        """Prepare market data context for Claude"""
+        """Prepara el contexto de datos del mercado para Claude"""
         if self.car_data.empty:
             return {}
 
-        # Filter cars based on client budget and preferences
+        # Filtrar autos según el presupuesto y preferencias del cliente
         budget_max = client_profile.get('budget_max', float('inf'))
         filtered_cars = self.car_data[self.car_data['price'] <= budget_max].copy()
 
         if not filtered_cars.empty:
-            # Basic market statistics
+            # Estadísticas básicas del mercado
             market_stats = {
                 'total_cars_available': len(filtered_cars),
                 'price_range': {
@@ -136,7 +136,7 @@ class CarRecommender:
                 'avg_mileage': int(filtered_cars['miles'].mean()) if 'miles' in filtered_cars.columns else None
             }
 
-            # Brand reliability/depreciation context
+            # Contexto de confiabilidad/depreciación por marca
             if self.depreciation_data:
                 market_stats['brand_depreciation_insights'] = {
                     'best_value_retention': sorted(self.depreciation_data.get('brand_rates', {}).items(),
@@ -152,7 +152,7 @@ class CarRecommender:
     def _create_recommendation_prompt(self, client_profile: Dict[str, Any],
                                     market_context: Dict[str, Any],
                                     max_recommendations: int) -> str:
-        """Create the Claude prompt for car recommendations"""
+        """Crea el prompt de Claude para recomendaciones de autos"""
 
         prompt_parts = [
             "Based on the following client profile and market data, recommend the best cars for this client.",
@@ -160,7 +160,7 @@ class CarRecommender:
             "CLIENT PROFILE:"
         ]
 
-        # Client preferences
+        # Preferencias del cliente
         for key, value in client_profile.items():
             if value is not None:
                 prompt_parts.append(f"- {key.replace('_', ' ').title()}: {value}")
@@ -170,7 +170,7 @@ class CarRecommender:
             "MARKET CONTEXT:"
         ])
 
-        # Market data
+        # Datos del mercado
         if market_context:
             prompt_parts.extend([
                 f"- Total cars available in budget: {market_context.get('total_cars_available', 'N/A')}",
@@ -214,9 +214,9 @@ class CarRecommender:
         return "\n".join(prompt_parts)
 
     def _parse_claude_response(self, response_text: str) -> List[Dict[str, Any]]:
-        """Parse Claude's JSON response"""
+        """Parsea la respuesta JSON de Claude"""
         try:
-            # Extract JSON from response
+            # Extraer JSON de la respuesta
             start_idx = response_text.find('{')
             end_idx = response_text.rfind('}') + 1
 
@@ -225,7 +225,7 @@ class CarRecommender:
                 parsed = json.loads(json_str)
                 return parsed.get('recommendations', [])
             else:
-                logger.warning("Could not find JSON in Claude response")
+                logger.warning("No se encontró JSON en la respuesta de Claude")
                 return []
 
         except json.JSONDecodeError as e:
@@ -234,7 +234,7 @@ class CarRecommender:
 
     def _add_value_analysis(self, recommendations: List[Dict[str, Any]],
                           client_profile: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Add depreciation and value analysis to recommendations"""
+        """Agrega análisis de depreciación y valor a las recomendaciones"""
         if not self.depreciation_data:
             return recommendations
 
@@ -243,20 +243,20 @@ class CarRecommender:
                 brand = rec.get('make', '')
                 price = rec.get('estimated_price', 0)
 
-                # Add depreciation insights
+                # Agregar información de depreciación
                 if brand in self.depreciation_data.get('brand_rates', {}):
                     annual_depr = self.depreciation_data['brand_rates'][brand]
                     rec['value_analysis'] = {
                         'annual_depreciation_rate': round(annual_depr, 2),
                         'estimated_5year_value': round(price * (1 - annual_depr/100 * 5), 0),
-                        'depreciation_category': 'Slow' if annual_depr < 15 else 'Moderate' if annual_depr < 25 else 'Fast'
+                        'depreciation_category': 'Lenta' if annual_depr < 15 else 'Moderada' if annual_depr < 25 else 'Rápida'
                     }
 
-                # Add mileage depreciation info
+                # Agregar información de impacto por kilometraje
                 if self.depreciation_data.get('mileage_rate'):
                     rec['mileage_impact'] = {
                         'loss_per_1000_miles': self.depreciation_data['mileage_rate'],
-                        'estimated_50000_mile_value': round(price * 0.7, 0)  # Rough estimate
+                        'estimated_50000_mile_value': round(price * 0.7, 0)  # Estimación aproximada
                     }
 
             except Exception as e:
@@ -268,14 +268,14 @@ class CarRecommender:
                                         user_text: str,
                                         max_recommendations: int = 3) -> Dict[str, Any]:
         """
-        Get car recommendations directly from a natural language description.
+        Obtiene recomendaciones de autos directamente desde una descripción en lenguaje natural.
 
         Args:
-            user_text: Free-form text describing what the client needs
-            max_recommendations: Number of recommendations to return
+            user_text: Texto libre describiendo lo que necesita el cliente
+            max_recommendations: Número de recomendaciones a retornar
 
         Returns:
-            Dictionary with recommendations and extracted profile
+            Diccionario con recomendaciones y perfil extraído
         """
         market_summary = ""
         if not self.car_data.empty:
@@ -334,7 +334,7 @@ class CarRecommender:
             return {'success': False, 'error': str(e), 'recommendations': []}
 
     def get_client_questionnaire(self) -> Dict[str, Any]:
-        """Get a structured questionnaire for client profiling"""
+        """Obtiene un cuestionario estructurado para perfilar al cliente"""
         return {
             'budget': {
                 'min_budget': 'Minimum budget in MXN',
@@ -367,23 +367,23 @@ def recommend_car_for_client(client_profile: Dict[str, Any],
                            api_key: Optional[str] = None,
                            max_recommendations: int = 3) -> Dict[str, Any]:
     """
-    Convenience function to get car recommendations
+    Función conveniente para obtener recomendaciones de autos
 
     Args:
-        client_profile: Client preferences and requirements
-        api_key: Anthropic API key
-        max_recommendations: Number of recommendations to return
+        client_profile: Preferencias y requisitos del cliente
+        api_key: Clave de API de Anthropic
+        max_recommendations: Número de recomendaciones a retornar
 
     Returns:
-        Dictionary with recommendations
+        Diccionario con recomendaciones
     """
     recommender = CarRecommender(api_key=api_key)
     return recommender.get_car_recommendations(client_profile, max_recommendations)
 
 
-# Example usage
+# Ejemplo de uso
 if __name__ == "__main__":
-    # Example client profile
+    # Perfil de cliente de ejemplo
     client_example = {
         'name': 'Juan Pérez',
         'budget_max': 500000,
@@ -395,8 +395,8 @@ if __name__ == "__main__":
         'key_requirements': ['Air conditioning', 'ABS', 'Multiple airbags', 'Good fuel economy']
     }
 
-    # This would normally be called with a valid API key
-    print("Car Recommendation System initialized")
-    print("To use: set ANTHROPIC_API_KEY environment variable and call recommend_car_for_client()")
-    print("\nExample client profile structure:")
+    # Normalmente esto se llamaría con una clave de API válida
+    print("Sistema de recomendación de autos inicializado")
+    print("Para usar: establece la variable de entorno ANTHROPIC_API_KEY y llama a recommend_car_for_client()")
+    print("\nEstructura de perfil de cliente de ejemplo:")
     print(json.dumps(client_example, indent=2))

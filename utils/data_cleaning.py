@@ -1,6 +1,6 @@
 """
-Data Cleaning Utilities
-Module for data cleaning and preprocessing functions for car price analysis
+Utilidades de Limpieza de Datos
+Módulo con funciones de limpieza y preprocesamiento de datos para análisis de precios de autos
 """
 
 import pandas as pd
@@ -14,29 +14,29 @@ logger = logging.getLogger(__name__)
 
 def string_similarity(str1, str2):
     """
-    Calculate string similarity ratio between two strings
-    
+    Calcula el ratio de similitud entre dos cadenas de texto
+
     Args:
-        str1: First string
-        str2: Second string
-    
+        str1: Primera cadena
+        str2: Segunda cadena
+
     Returns:
-        float: Similarity ratio (0-1)
+        float: Ratio de similitud (0-1)
     """
     return SequenceMatcher(None, str(str1).lower(), str(str2).lower()).ratio()
 
 
 def fill_from_group(group, cols, numeric_cols=None):
     """
-    Fill missing values in a group from other observations
-    
+    Rellena valores faltantes en un grupo a partir de otras observaciones
+
     Args:
-        group: DataFrame group
-        cols: List of columns to fill
-        numeric_cols: List of numeric columns to use mean for
-    
+        group: Grupo del DataFrame
+        cols: Lista de columnas a rellenar
+        numeric_cols: Lista de columnas numéricas para usar la media
+
     Returns:
-        DataFrame: Group with filled values
+        DataFrame: Grupo con valores rellenados
     """
     if numeric_cols is None:
         numeric_cols = []
@@ -57,15 +57,15 @@ def fill_from_group(group, cols, numeric_cols=None):
 
 def fill_missing_from_make_model(df, fill_cols=None, numeric_cols=None):
     """
-    Fill missing values by grouping on make and model
-    
+    Rellena valores faltantes agrupando por marca y modelo
+
     Args:
-        df: Input DataFrame
-        fill_cols: List of columns to fill
-        numeric_cols: List of numeric columns
-    
+        df: DataFrame de entrada
+        fill_cols: Lista de columnas a rellenar
+        numeric_cols: Lista de columnas numéricas
+
     Returns:
-        DataFrame: DataFrame with filled values
+        DataFrame: DataFrame con valores rellenados
     """
     if fill_cols is None:
         fill_cols = ['engine', 'transmission', 'fuel_type', 'body_type', 
@@ -85,15 +85,15 @@ def fill_missing_from_make_model(df, fill_cols=None, numeric_cols=None):
 
 def fill_missing_from_make(df, fill_cols=None, numeric_cols=None):
     """
-    Fill remaining missing values at make (brand) level
-    
+    Rellena los valores faltantes restantes a nivel de marca
+
     Args:
-        df: Input DataFrame
-        fill_cols: List of columns to fill
-        numeric_cols: List of numeric columns
-    
+        df: DataFrame de entrada
+        fill_cols: Lista de columnas a rellenar
+        numeric_cols: Lista de columnas numéricas
+
     Returns:
-        DataFrame: DataFrame with filled values
+        DataFrame: DataFrame con valores rellenados
     """
     if fill_cols is None:
         fill_cols = ['engine', 'transmission', 'fuel_type', 'body_type', 
@@ -113,15 +113,15 @@ def fill_missing_from_make(df, fill_cols=None, numeric_cols=None):
 
 def fill_missing_at_global(df, fill_cols=None, numeric_cols=None):
     """
-    Fill remaining missing values using global statistics
-    
+    Rellena los valores faltantes restantes usando estadísticas globales
+
     Args:
-        df: Input DataFrame
-        fill_cols: List of columns to fill
-        numeric_cols: List of numeric columns
-    
+        df: DataFrame de entrada
+        fill_cols: Lista de columnas a rellenar
+        numeric_cols: Lista de columnas numéricas
+
     Returns:
-        DataFrame: DataFrame with filled values
+        DataFrame: DataFrame con valores rellenados
     """
     if fill_cols is None:
         fill_cols = ['body_type', 'engine', 'transmission', 'fuel_type', 
@@ -130,9 +130,9 @@ def fill_missing_at_global(df, fill_cols=None, numeric_cols=None):
     if numeric_cols is None:
         numeric_cols = ['city_mpg', 'highway_mpg']
     
-    logger.info(f"Filling remaining missing values at global level...")
-    
-    # Categorical columns - use mode
+    logger.info(f"Rellenando valores faltantes restantes a nivel global...")
+
+    # Columnas categóricas - usar moda
     for col in fill_cols:
         if col in df.columns and df[col].isnull().any():
             mode_val = df[col].mode()
@@ -140,7 +140,7 @@ def fill_missing_at_global(df, fill_cols=None, numeric_cols=None):
                 df[col] = df[col].fillna(mode_val[0])
                 logger.info(f"  Filled {col} with mode: {mode_val[0]}")
     
-    # Numeric columns - use mean
+    # Columnas numéricas - usar media
     for col in numeric_cols:
         if col in df.columns and df[col].isnull().any():
             mean_val = df[col].mean()
@@ -152,57 +152,57 @@ def fill_missing_at_global(df, fill_cols=None, numeric_cols=None):
 
 def calculate_derived_columns(df, current_year=2026):
     """
-    Calculate derived columns (car_age, miles_per_year, market metrics)
-    
+    Calcula columnas derivadas (car_age, miles_per_year, métricas de mercado)
+
     Args:
-        df: Input DataFrame
-        current_year: Current year for age calculation
-    
+        df: DataFrame de entrada
+        current_year: Año actual para el cálculo de antigüedad
+
     Returns:
-        DataFrame: DataFrame with calculated columns
+        DataFrame: DataFrame con columnas calculadas
     """
-    logger.info("Calculating derived columns...")
-    
+    logger.info("Calculando columnas derivadas...")
+
     # car_age: current_year - year
     if 'car_age' not in df.columns or df['car_age'].isnull().any():
         df['car_age'] = df['car_age'].fillna(current_year - df['year'])
-        logger.info(f"  Calculated car_age = {current_year} - year")
-    
+        logger.info(f"  Calculado car_age = {current_year} - year")
+
     # miles_per_year: miles / car_age
     if 'miles_per_year' not in df.columns or df['miles_per_year'].isnull().any():
         df['miles_per_year'] = df['miles_per_year'].fillna(
             df.apply(lambda row: row['miles'] / row['car_age'] if row['car_age'] > 0 else 0, axis=1)
         )
-        logger.info(f"  Calculated miles_per_year = miles / car_age")
-    
-    # avg_price_model: average price for each make/model
+        logger.info(f"  Calculado miles_per_year = miles / car_age")
+
+    # avg_price_model: precio promedio por marca/modelo
     if 'avg_price_model' not in df.columns or df['avg_price_model'].isnull().any():
         avg_price_per_model = df.groupby(['make', 'model'])['price'].transform('mean')
         df['avg_price_model'] = df['avg_price_model'].fillna(avg_price_per_model)
-        logger.info(f"  Calculated avg_price_model = mean(price) by make/model")
-    
+        logger.info(f"  Calculado avg_price_model = mean(price) por marca/modelo")
+
     # price_vs_market: price - avg_price_model
     if 'price_vs_market' not in df.columns or df['price_vs_market'].isnull().any():
         df['price_vs_market'] = df['price_vs_market'].fillna(
             df['price'] - df['avg_price_model']
         )
-        logger.info(f"  Calculated price_vs_market = price - avg_price_model")
+        logger.info(f"  Calculado price_vs_market = price - avg_price_model")
     
     return df
 
 
 def remove_outliers(df, column, method='iqr', threshold=1.5):
     """
-    Remove outliers from a column
-    
+    Elimina valores atípicos de una columna
+
     Args:
-        df: Input DataFrame
-        column: Column name
-        method: 'iqr' for interquartile range, 'zscore' for z-score
-        threshold: IQR multiplier (default 1.5) or z-score threshold (default 3)
-    
+        df: DataFrame de entrada
+        column: Nombre de la columna
+        method: 'iqr' para rango intercuartil, 'zscore' para z-score
+        threshold: Multiplicador IQR (por defecto 1.5) o umbral z-score (por defecto 3)
+
     Returns:
-        DataFrame: DataFrame without outliers
+        DataFrame: DataFrame sin valores atípicos
     """
     if method == 'iqr':
         Q1 = df[column].quantile(0.25)
@@ -227,20 +227,20 @@ def remove_outliers(df, column, method='iqr', threshold=1.5):
 
 def standardize_columns(df, columns_mapping=None):
     """
-    Standardize column names and types
-    
+    Estandariza nombres y tipos de columnas
+
     Args:
-        df: Input DataFrame
-        columns_mapping: Dictionary of column name mappings
-    
+        df: DataFrame de entrada
+        columns_mapping: Diccionario con mapeo de nombres de columnas
+
     Returns:
-        DataFrame: DataFrame with standardized columns
+        DataFrame: DataFrame con columnas estandarizadas
     """
     if columns_mapping:
         df = df.rename(columns=columns_mapping)
-        logger.info(f"Renamed columns: {columns_mapping}")
-    
-    # Ensure key columns have correct types
+        logger.info(f"Columnas renombradas: {columns_mapping}")
+
+    # Asegurar que las columnas clave tengan los tipos correctos
     if 'price' in df.columns:
         df['price'] = pd.to_numeric(df['price'], errors='coerce')
     
@@ -253,37 +253,37 @@ def standardize_columns(df, columns_mapping=None):
     return df
 
 
-def clean_dataset(df, remove_outliers_flag=False, outlier_column='price', 
+def clean_dataset(df, remove_outliers_flag=False, outlier_column='price',
                   current_year=2026):
     """
-    Comprehensive dataset cleaning pipeline
-    
+    Pipeline completo de limpieza del dataset
+
     Args:
-        df: Input DataFrame
-        remove_outliers_flag: Whether to remove outliers
-        outlier_column: Column to check for outliers
-        current_year: Current year for calculations
-    
+        df: DataFrame de entrada
+        remove_outliers_flag: Si se deben eliminar valores atípicos
+        outlier_column: Columna a revisar para valores atípicos
+        current_year: Año actual para los cálculos
+
     Returns:
-        DataFrame: Cleaned DataFrame
+        DataFrame: DataFrame limpio
     """
-    logger.info("Starting comprehensive data cleaning...")
-    
-    # Step 1: Fill from make/model and make level
+    logger.info("Iniciando limpieza exhaustiva de datos...")
+
+    # Paso 1: Rellenar desde grupos marca/modelo y marca
     df = fill_missing_from_make_model(df)
     df = fill_missing_from_make(df)
     df = fill_missing_at_global(df)
-    
-    # Step 2: Calculate derived columns
+
+    # Paso 2: Calcular columnas derivadas
     df = calculate_derived_columns(df, current_year)
-    
-    # Step 3: Remove duplicates if any
+
+    # Paso 3: Eliminar duplicados si existen
     initial_len = len(df)
     df = df.drop_duplicates()
     if len(df) < initial_len:
-        logger.info(f"Removed {initial_len - len(df)} duplicate rows")
-    
-    # Step 4: Optional outlier removal
+        logger.info(f"Eliminadas {initial_len - len(df)} filas duplicadas")
+
+    # Paso 4: Eliminación opcional de valores atípicos
     if remove_outliers_flag and outlier_column in df.columns:
         df = remove_outliers(df, outlier_column, method='iqr', threshold=1.5)
     
@@ -293,13 +293,13 @@ def clean_dataset(df, remove_outliers_flag=False, outlier_column='price',
 
 def get_data_summary(df):
     """
-    Get comprehensive summary of dataset quality
-    
+    Obtiene un resumen completo de la calidad del dataset
+
     Args:
-        df: Input DataFrame
-    
+        df: DataFrame de entrada
+
     Returns:
-        dict: Summary statistics
+        dict: Estadísticas resumen
     """
     summary = {
         'total_records': len(df),
@@ -313,6 +313,6 @@ def get_data_summary(df):
 
 
 if __name__ == "__main__":
-    # Example usage
-    print("Data Cleaning Module")
-    print("Import this module and use the functions for data preprocessing")
+    # Ejemplo de uso
+    print("Módulo de Limpieza de Datos")
+    print("Importa este módulo y usa las funciones para el preprocesamiento de datos")
