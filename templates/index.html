@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Car Genie</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue:      #3b82f6;
+      --blue-dark: #2563eb;
+      --blue-lt:   #eff6ff;
+      --red:       #ef4444;
+      --amber:     #f59e0b;
+      --green:     #22c55e;
+      --gray-50:   #f9fafb;
+      --gray-100:  #f3f4f6;
+      --gray-200:  #e5e7eb;
+      --gray-400:  #9ca3af;
+      --gray-500:  #6b7280;
+      --gray-700:  #374151;
+      --gray-900:  #111827;
+      --radius:    14px;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,.06);
+      --shadow:    0 1px 3px rgba(0,0,0,.08), 0 6px 24px rgba(0,0,0,.06);
+      --w:         960px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--gray-50);
+      color: var(--gray-900);
+      min-height: 100vh;
+    }
+
+    /* ── NAV ─────────────────────────────────────────────────── */
+    nav {
+      background: #fff;
+      border-bottom: 1px solid var(--gray-200);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .nav-inner {
+      max-width: var(--w); margin: 0 auto; padding: 0 28px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 58px;
+    }
+    /* ── BRAND LOGO ──────────────────────────────────────────── */
+    .nav-brand {
+      display: flex; align-items: center; gap: 8px;
+      text-decoration: none;
+    }
+    .nav-brand img {
+      height: 38px; width: auto; object-fit: contain;
+    }
+    .nav-brand-text {
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      font-weight: 800; font-size: 1.45rem;
+      letter-spacing: -.4px;
+      color: #3b82f6;
+      line-height: 1;
+    }
+    .nav-links  { display: flex; gap: 28px; }
+    .nav-links a {
+      text-decoration: none; color: var(--gray-500);
+      font-size: .875rem; font-weight: 500; transition: color .15s;
+    }
+    .nav-links a.active, .nav-links a:hover { color: var(--blue); }
+
+    /* ── HERO ────────────────────────────────────────────────── */
+    .hero { text-align: center; padding: 52px 24px 32px; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--blue-lt); color: var(--blue);
+      font-size: .75rem; font-weight: 700; padding: 5px 14px;
+      border-radius: 999px; margin-bottom: 18px; letter-spacing: .3px;
+    }
+    .hero h1 {
+      font-size: 2.5rem; font-weight: 800; line-height: 1.18;
+      letter-spacing: -.5px; color: var(--gray-900);
+    }
+    .hero p {
+      margin-top: 12px; color: var(--gray-500);
+      font-size: .95rem; line-height: 1.6;
+      max-width: 480px; margin-inline: auto;
+    }
+
+    /* ── CARD ────────────────────────────────────────────────── */
+    .card {
+      background: #fff; border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    /* ── FORM CARD ───────────────────────────────────────────── */
+    .form-card  { max-width: var(--w); margin: 0 auto 0; padding: 32px 36px 28px; }
+    .form-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 24px; }
+    .form-grid  {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;
+    }
+    @media (max-width: 700px) { .form-grid { grid-template-columns: 1fr; } }
+
+    .field label {
+      display: block; font-size: .78rem; font-weight: 600;
+      color: var(--gray-700); margin-bottom: 7px;
+    }
+
+    /* Pill-shaped inputs matching the screenshot */
+    .field select,
+    .field input {
+      width: 100%; height: 46px; padding: 0 16px;
+      border: 1.5px solid var(--gray-200); border-radius: 999px;
+      font-size: .9rem; color: var(--gray-900); background: #fff;
+      outline: none; transition: border-color .15s, box-shadow .15s;
+      appearance: none; -webkit-appearance: none;
+    }
+    .field select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; padding-right: 40px; }
+    .field select:focus, .field input:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(59,130,246,.12);
+    }
+
+    /* Primary button */
+    .btn-primary {
+      margin-top: 22px; width: 100%; height: 52px;
+      background: var(--blue); color: #fff; border: none;
+      border-radius: 999px; font-size: .95rem; font-weight: 600;
+      cursor: pointer; display: flex; align-items: center;
+      justify-content: center; gap: 8px; transition: background .15s, transform .1s;
+      letter-spacing: .1px;
+    }
+    .btn-primary:hover   { background: var(--blue-dark); }
+    .btn-primary:active  { transform: scale(.99); }
+    .btn-primary:disabled { background: var(--gray-400); cursor: not-allowed; transform: none; }
+
+    /* ── RESULTS HEADER ──────────────────────────────────────── */
+    .results-header {
+      max-width: var(--w); margin: 0 auto;
+      padding: 20px 36px 0;
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+    .results-car-name { font-size: 1.1rem; font-weight: 800; }
+    .results-meta { font-size: .82rem; color: var(--gray-500); }
+    .results-sep { color: var(--gray-300); }
+
+    /* ── METRICS STRIP ───────────────────────────────────────── */
+    .metrics-strip {
+      max-width: var(--w); margin: 16px auto 0;
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 0; border-radius: var(--radius); overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    @media (max-width: 700px) { .metrics-strip { grid-template-columns: repeat(2, 1fr); } }
+
+    .metric-card {
+      background: #fff; padding: 28px 30px 26px;
+      border-right: 1px solid var(--gray-100);
+      position: relative;
+    }
+    .metric-card:last-child { border-right: none; }
+
+    .metric-label {
+      display: flex; align-items: center; gap: 7px;
+      font-size: .82rem; color: var(--gray-500); margin-bottom: 12px;
+      font-weight: 500;
+    }
+    .metric-icon {
+      width: 18px; height: 18px; display: flex;
+      align-items: center; justify-content: center;
+    }
+    .metric-icon svg { width: 16px; height: 16px; }
+
+    .metric-value {
+      font-size: 2.4rem; font-weight: 800; line-height: 1;
+      letter-spacing: -.8px; color: var(--gray-900);
+    }
+    .metric-value.red    { color: var(--red); }
+    .metric-value.green  { color: var(--green); }
+
+    .metric-sub {
+      font-size: .73rem; color: var(--gray-400);
+      margin-top: 6px; line-height: 1.4;
+    }
+
+    .confidence-bar {
+      height: 7px; border-radius: 4px;
+      background: var(--gray-100); margin-top: 10px; overflow: hidden;
+    }
+    .confidence-fill {
+      height: 100%; background: var(--blue); border-radius: 4px;
+      transition: width .7s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* ── SELL RECOMMENDATION BANNER ──────────────────────────── */
+    .sell-rec-banner {
+      max-width: var(--w); margin: 16px auto 0;
+      padding: 16px 24px; border-radius: var(--radius);
+      background: var(--blue-lt); border: 1.5px solid #bfdbfe;
+      display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+      box-shadow: var(--shadow-sm);
+    }
+    .sell-rec-banner.urgent { background: #fffbeb; border-color: #fcd34d; }
+    .sell-rec-icon { font-size: 1.5rem; line-height: 1; }
+    .sell-rec-body { flex: 1; min-width: 180px; }
+    .sell-rec-title { font-size: .9rem; font-weight: 700; }
+    .sell-rec-desc  { font-size: .79rem; color: var(--gray-500); margin-top: 3px; line-height: 1.4; }
+    .sell-rec-stat  { text-align: right; }
+    .sell-rec-year  { font-size: 1.5rem; font-weight: 800; color: var(--blue); line-height: 1; }
+    .sell-rec-stat.urgent .sell-rec-year { color: var(--amber); }
+    .sell-rec-label { font-size: .7rem; color: var(--gray-400); margin-top: 2px; }
+
+    /* ── CHART SECTION ───────────────────────────────────────── */
+    .chart-section { max-width: var(--w); margin: 20px auto 0; padding: 26px 30px; }
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 18px;
+    }
+    .section-header h3 { font-size: 1rem; font-weight: 700; }
+    .legend { display: flex; gap: 18px; font-size: .75rem; color: var(--gray-500); }
+    .legend span { display: flex; align-items: center; gap: 6px; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+    .chart-wrapper { height: 230px; position: relative; }
+
+    /* ── BEST TIME TO SELL TABLE ─────────────────────────────── */
+    .sell-section { max-width: var(--w); margin: 20px auto 36px; padding: 26px 30px; }
+
+    .sell-row {
+      display: flex; align-items: center; gap: 16px;
+      padding: 13px 0; border-bottom: 1px solid var(--gray-100);
+    }
+    .sell-row:last-child { border-bottom: none; }
+
+    .sell-year-col { min-width: 64px; display: flex; align-items: center; gap: 8px; }
+    .sell-year     { font-size: .95rem; font-weight: 700; }
+    .sell-badge {
+      background: var(--blue); color: #fff;
+      font-size: .62rem; font-weight: 700;
+      padding: 2px 8px; border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .sell-bar-wrap { flex: 1; }
+    .sell-bar-track {
+      height: 9px; background: var(--gray-100);
+      border-radius: 5px; overflow: hidden;
+    }
+    .sell-bar-fill {
+      height: 100%; border-radius: 5px;
+      transition: width .7s cubic-bezier(.4,0,.2,1);
+    }
+    .sell-retention { font-size: .72rem; color: var(--gray-400); margin-top: 4px; }
+
+    .sell-prices { text-align: right; min-width: 110px; }
+    .sell-price-main { font-size: .92rem; font-weight: 700; }
+    .sell-price-loss { font-size: .72rem; color: var(--red); margin-top: 2px; }
+
+    /* ── AI RECOMMENDATION PAGE ──────────────────────────────── */
+    .rec-card { max-width: var(--w); margin: 28px auto; padding: 32px 36px; }
+    .rec-card h2 { font-size: 1.05rem; font-weight: 700; margin-bottom: 6px; }
+    .rec-card > p { font-size: .85rem; color: var(--gray-500); margin-bottom: 18px; line-height: 1.5; }
+
+    .field textarea {
+      width: 100%; min-height: 110px; padding: 14px 18px;
+      border: 1.5px solid var(--gray-200); border-radius: 14px;
+      font-size: .9rem; color: var(--gray-900); background: #fff;
+      outline: none; resize: vertical;
+      transition: border-color .15s, box-shadow .15s;
+      font-family: inherit;
+    }
+    .field textarea:focus {
+      border-color: var(--blue); box-shadow: 0 0 0 3px rgba(59,130,246,.12);
+    }
+
+    .rec-results { margin-top: 24px; display: flex; flex-direction: column; gap: 14px; }
+    .rec-item {
+      border: 1.5px solid var(--gray-200); border-radius: var(--radius);
+      padding: 20px 22px;
+    }
+    .rec-header { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+    .rec-rank { background: var(--blue); color: #fff; font-size: .72rem; font-weight: 700; padding: 2px 9px; border-radius: 999px; }
+    .rec-title { font-size: 1.05rem; font-weight: 700; }
+    .rec-year  { font-size: .82rem; color: var(--gray-500); }
+    .rec-price { font-size: .85rem; color: var(--blue); font-weight: 600; margin-left: auto; }
+    .rec-why   { font-size: .82rem; color: var(--gray-500); margin-bottom: 12px; line-height: 1.5; }
+    .rec-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+    .chip { font-size: .72rem; padding: 3px 10px; border-radius: 999px; font-weight: 600; }
+    .chip.pro { background: #dcfce7; color: #15803d; }
+    .chip.con { background: #fef3c7; color: #92400e; }
+    .chip.depr { background: #ede9fe; color: #6d28d9; }
+
+    .profile-box {
+      background: var(--gray-50); border-radius: 10px;
+      padding: 14px 18px; margin-bottom: 18px;
+      font-size: .82rem; color: var(--gray-700);
+    }
+    .profile-box strong { display: block; font-size: .8rem; margin-bottom: 8px; font-weight: 700; }
+    .profile-box ul { list-style: none; display: flex; flex-wrap: wrap; gap: 4px 20px; }
+    .profile-box li { display: flex; gap: 4px; }
+
+    /* ── NEXT CAR RECOMMENDATIONS ───────────────────────────── */
+    .next-car-section {
+      max-width: var(--w); margin: 20px auto 36px;
+      padding: 28px 30px;
+    }
+    .next-car-header {
+      display: flex; align-items: flex-start;
+      justify-content: space-between; margin-bottom: 22px; flex-wrap: wrap; gap: 10px;
+    }
+    .next-car-title { font-size: 1.05rem; font-weight: 700; }
+    .next-car-sub   { font-size: .8rem; color: var(--gray-500); margin-top: 3px; }
+    .powered-badge  {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #111; color: #fff; font-size: .7rem; font-weight: 600;
+      padding: 5px 12px; border-radius: 999px; white-space: nowrap;
+    }
+    .powered-dot { width: 7px; height: 7px; background: #22c55e; border-radius: 50%; flex-shrink:0; }
+
+    /* Subtle genie appearances */
+    .hero-genie {
+      display: block; margin: 0 auto 12px;
+      height: 90px; width: auto; opacity: .92;
+      filter: drop-shadow(0 4px 12px rgba(59,130,246,.18));
+    }
+    .rec-genie {
+      height: 64px; width: auto; opacity: .85; flex-shrink: 0;
+      filter: drop-shadow(0 2px 8px rgba(59,130,246,.15));
+    }
+
+    /* ── BRAND WATERMARK ─────────────────────────────────────────── */
+    .valuation-wrapper {
+      position: relative; padding-bottom: 20px;
+    }
+    .brand-watermark {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex; flex-direction: column; align-items: center;
+      gap: 4px; pointer-events: none; user-select: none;
+      transition: opacity .9s ease, transform .9s ease;
+      opacity: 1; z-index: 0;
+    }
+    .brand-watermark img {
+      height: 160px; width: auto;
+      filter: saturate(.5) opacity(.13);
+    }
+    .brand-watermark-text {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 800; font-size: 6rem;
+      letter-spacing: -3px; line-height: 1;
+      color: #3b82f6; opacity: .06;
+      white-space: nowrap;
+    }
+    .brand-watermark.faded {
+      opacity: .3;
+      transform: translate(-50%, -50%) scale(.88);
+    }
+
+    /* Chat input bar */
+    .chat-bar {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--gray-50); border: 1.5px solid var(--gray-200);
+      border-radius: 999px; padding: 8px 8px 8px 20px;
+      margin-bottom: 22px; transition: border-color .15s, box-shadow .15s;
+    }
+    .chat-bar:focus-within {
+      border-color: var(--blue); box-shadow: 0 0 0 3px rgba(59,130,246,.12);
+    }
+    .chat-bar input {
+      flex: 1; border: none; background: transparent; outline: none;
+      font-size: .9rem; color: var(--gray-900); font-family: inherit;
+    }
+    .chat-bar input::placeholder { color: var(--gray-400); }
+    .chat-send-btn {
+      background: var(--blue); color: #fff; border: none;
+      border-radius: 999px; padding: 8px 18px; font-size: .85rem;
+      font-weight: 600; cursor: pointer; display: flex; align-items: center;
+      gap: 6px; transition: background .15s; white-space: nowrap; flex-shrink: 0;
+    }
+    .chat-send-btn:hover    { background: var(--blue-dark); }
+    .chat-send-btn:disabled { background: var(--gray-400); cursor: not-allowed; }
+
+    /* Car recommendation cards grid */
+    .rec-cards-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+    }
+    @media (max-width: 700px) { .rec-cards-grid { grid-template-columns: 1fr; } }
+
+    .car-rec-card {
+      border: 1.5px solid var(--gray-200); border-radius: var(--radius);
+      padding: 20px 20px 18px; background: #fff;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .car-rec-badge {
+      display: inline-block; font-size: .7rem; font-weight: 700;
+      padding: 3px 10px; border-radius: 999px; width: fit-content;
+    }
+    .car-rec-badge.upgrade { background: #eff6ff; color: var(--blue); }
+    .car-rec-badge.eco     { background: #dcfce7; color: #15803d; }
+    .car-rec-badge.budget  { background: #fff7ed; color: #c2410c; }
+    .car-rec-badge.default { background: var(--gray-100); color: var(--gray-700); }
+
+    .car-rec-name  { font-size: 1rem; font-weight: 700; line-height: 1.3; }
+    .car-rec-price {
+      font-size: 1.55rem; font-weight: 800; letter-spacing: -.5px;
+      color: var(--gray-900);
+    }
+    .car-rec-why   { font-size: .78rem; color: var(--gray-500); line-height: 1.5; flex: 1; }
+    .car-rec-stats {
+      display: flex; gap: 18px; padding-top: 10px;
+      border-top: 1px solid var(--gray-100); margin-top: 4px;
+    }
+    .car-rec-stat-item { display: flex; flex-direction: column; gap: 2px; }
+    .car-rec-stat-label { font-size: .68rem; color: var(--gray-400); }
+    .car-rec-stat-value { font-size: .88rem; font-weight: 700; }
+
+    /* Chat message thread */
+    .chat-thread { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+    .chat-msg {
+      max-width: 85%; padding: 10px 16px; border-radius: 16px;
+      font-size: .85rem; line-height: 1.5;
+    }
+    .chat-msg.user {
+      align-self: flex-end; background: var(--blue); color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+    .chat-msg.assistant {
+      align-self: flex-start; background: var(--gray-100); color: var(--gray-900);
+      border-bottom-left-radius: 4px;
+    }
+
+    /* ── ABOUT PAGE ──────────────────────────────────────────── */
+    .about-card { max-width: var(--w); margin: 0 auto 36px; padding: 32px 36px; font-size: .9rem; color: var(--gray-700); line-height: 1.75; }
+    .about-card h2 { font-size: 1.05rem; font-weight: 700; margin-bottom: 18px; }
+    .about-row { display: flex; gap: 14px; margin-bottom: 18px; }
+    .about-icon { font-size: 1.2rem; margin-top: 1px; flex-shrink: 0; }
+    .about-row strong { display: block; color: var(--gray-900); font-weight: 700; margin-bottom: 3px; }
+
+    /* ── SPINNER ─────────────────────────────────────────────── */
+    .spinner {
+      display: none; width: 18px; height: 18px;
+      border: 2.5px solid rgba(255,255,255,.35);
+      border-top-color: #fff; border-radius: 50%;
+      animation: spin .65s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── UTILS ───────────────────────────────────────────────── */
+    .hidden { display: none !important; }
+    .page   { display: none; }
+    .page.active { display: block; }
+
+    /* page padding */
+    #page-valuation .hero,
+    #page-recommend .hero,
+    #page-about .hero { padding-inline: 28px; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════ NAV ══════════════════════════════ -->
+<nav>
+  <div class="nav-inner">
+    <a class="nav-brand" href="#" onclick="switchPage('valuation')">
+      <img src="/static/car-genie-logo.png" alt="Car Genie mascot" />
+      <span class="nav-brand-text">Car Genie</span>
+    </a>
+    <div class="nav-links">
+      <a href="#" onclick="switchPage('valuation')"  id="nav-valuation"  class="active">Predecir</a>
+      <a href="#" onclick="switchPage('recommend')"  id="nav-recommend">Recomendar</a>
+      <a href="#" onclick="switchPage('about')"      id="nav-about">Acerca de</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ══════════════════════ VALUATION PAGE ═══════════════════════ -->
+<div id="page-valuation" class="page active">
+
+  <!-- Hero (kept as-is) -->
+  <div class="hero">
+    <img src="/static/car-genie-logo.png" alt="" class="hero-genie" />
+    <div class="badge">🔮 Valuación con IA</div>
+    <h1>Predice el Valor Real<br>de tu Carro</h1>
+    <p>Valuación inteligente con análisis de depreciación,<br>momento óptimo de venta y recomendaciones personalizadas</p>
+  </div>
+
+  <!-- ── Watermark + form wrapper ── -->
+  <div class="valuation-wrapper">
+
+    <!-- Watermark sits behind the form only -->
+    <div class="brand-watermark" id="brand-watermark">
+      <img src="/static/car-genie-logo.png" alt="" />
+      <span class="brand-watermark-text">Car Genie</span>
+    </div>
+
+    <!-- ── Input Form ── -->
+    <div class="form-card card" style="margin: 0 auto; max-width: var(--w); position: relative; z-index: 1;">
+    <p class="form-title">Valúa tu Carro</p>
+
+    <div class="form-grid">
+      <!-- Row 1 -->
+      <div class="field">
+        <label for="make">Marca</label>
+        <select id="make" onchange="loadModels()">
+          <option value="">Selecciona Marca</option>
+          {% for make in makes %}
+          <option value="{{ make }}">{{ make }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="model">Modelo</label>
+        <select id="model">
+          <option value="">Selecciona Modelo</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="year">Año</label>
+        <select id="year">
+          <option value="">Selecciona Año</option>
+          {% for year in years %}
+          <option value="{{ year }}">{{ year }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Row 2 -->
+      <div class="field">
+        <label for="miles">Kilometraje</label>
+        <input type="number" id="miles" placeholder="ej. 45,000 km" min="0" />
+      </div>
+      <div class="field">
+        <label for="condition">Condición</label>
+        <select id="condition">
+          <option value="Excellent">Excelente</option>
+          <option value="Good" selected>Buena</option>
+          <option value="Fair">Regular</option>
+          <option value="Poor">Mala</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="fuel_type">Combustible</label>
+        <select id="fuel_type">
+          <option value="">Selecciona Combustible</option>
+          <option>Gasoline</option>
+          <option>Diesel</option>
+          <option>Hybrid</option>
+          <option>Electric</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="predict-btn" onclick="predict()">
+      <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <span id="btn-text">Obtener Valuación</span>
+      <div class="spinner" id="predict-spinner"></div>
+    </button>
+  </div>
+
+  </div><!-- /valuation-wrapper -->
+
+  <!-- ── Results header (car label) ── -->
+  <div class="results-header hidden" id="results-header">
+    <span class="results-car-name" id="rh-name">—</span>
+    <span class="results-sep">·</span>
+    <span class="results-meta" id="rh-meta">—</span>
+  </div>
+
+  <!-- ── Metrics strip ── -->
+  <div class="metrics-strip hidden" id="metrics-section">
+
+    <!-- Estimated Value -->
+    <div class="metric-card">
+      <div class="metric-label">
+        <span class="metric-icon" style="color:#3b82f6">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </span>
+        Valor Estimado
+      </div>
+      <div class="metric-value" id="m-value">—</div>
+      <div class="metric-sub" id="m-range">—</div>
+    </div>
+
+    <!-- Model Confidence -->
+    <div class="metric-card">
+      <div class="metric-label">
+        <span class="metric-icon" style="color:#3b82f6">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </span>
+        Confianza del Modelo
+      </div>
+      <div class="metric-value" id="m-conf">—</div>
+      <div class="confidence-bar"><div class="confidence-fill" id="m-conf-bar" style="width:0%"></div></div>
+    </div>
+
+    <!-- Total Depreciation -->
+    <div class="metric-card">
+      <div class="metric-label">
+        <span class="metric-icon" style="color:#ef4444">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
+        </span>
+        Depreciación Total
+      </div>
+      <div class="metric-value red" id="m-depr">—</div>
+      <div class="metric-sub">del valor actual (7 años)</div>
+    </div>
+
+    <!-- Avg Annual Loss -->
+    <div class="metric-card">
+      <div class="metric-label">
+        <span class="metric-icon" style="color:#3b82f6">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </span>
+        Pérdida Anual Prom.
+      </div>
+      <div class="metric-value red" id="m-loss">—</div>
+      <div class="metric-sub">promedio por año</div>
+    </div>
+  </div>
+
+  <!-- ── Sell recommendation banner ── -->
+  <div class="sell-rec-banner hidden" id="sell-rec-banner">
+    <div class="sell-rec-icon" id="sell-rec-icon">📅</div>
+    <div class="sell-rec-body">
+      <div class="sell-rec-title" id="sell-rec-title">Mejor momento para vender</div>
+      <div class="sell-rec-desc"  id="sell-rec-desc">—</div>
+    </div>
+    <div class="sell-rec-stat" id="sell-rec-stat">
+      <div class="sell-rec-year"  id="sell-rec-year">—</div>
+      <div class="sell-rec-label">año recomendado para vender</div>
+    </div>
+  </div>
+
+  <!-- ── Annual Price Change chart ── -->
+  <div class="chart-section card hidden" id="chart-section">
+    <div class="section-header">
+      <h3>Cambio de Precio Anual</h3>
+      <div class="legend">
+        <span><span class="legend-dot" style="background:#d1d5db"></span>Valor de Mercado</span>
+        <span><span class="legend-dot" style="background:var(--blue)"></span>Ventana Óptima de Venta</span>
+      </div>
+    </div>
+    <div class="chart-wrapper"><canvas id="price-chart"></canvas></div>
+  </div>
+
+  <!-- ── Best Time to Sell table ── -->
+  <div class="sell-section card hidden" id="sell-section">
+    <div class="section-header"><h3>Mejor Momento para Vender</h3></div>
+    <div id="sell-rows"></div>
+  </div>
+
+  <!-- ── Next Car Recommendations ── -->
+  <div class="next-car-section card hidden" id="next-car-section">
+    <div class="next-car-header">
+      <div>
+        <div class="next-car-title">Recomendaciones para tu Próximo Carro</div>
+        <div class="next-car-sub">Opciones personalizadas según tu perfil actual</div>
+      </div>
+      <div class="powered-badge">
+        <span class="powered-dot"></span>
+        Powered by Claude API
+      </div>
+    </div>
+
+    <!-- Intro message from the genie -->
+    <div class="chat-thread" id="chat-thread">
+      <div style="display:flex; align-items:flex-end; gap:10px;">
+        <img src="/static/car-genie-logo.png" alt="" class="rec-genie" />
+        <div class="chat-msg assistant">
+          Ya vimos que quieres vender tu carro — ¿te ayudamos a encontrar el siguiente? ¿Qué estás buscando? 🚗
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat input bar -->
+    <div class="chat-bar">
+      <input type="text" id="chat-input"
+        placeholder="ej. 'Busco algo más eficiente, menos de $300,000, para uso familiar'"
+        onkeydown="if(event.key==='Enter') sendChatRec()" />
+      <button class="chat-send-btn" id="chat-send-btn" onclick="sendChatRec()">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Enviar
+        <div class="spinner" id="chat-spinner" style="display:none"></div>
+      </button>
+    </div>
+
+    <!-- Recommendation cards -->
+    <div class="rec-cards-grid hidden" id="rec-cards-grid"></div>
+  </div>
+
+</div><!-- /page-valuation -->
+
+<!-- ══════════════════════ RECOMMEND PAGE ═══════════════════════ -->
+<div id="page-recommend" class="page">
+  <div class="hero">
+    <div class="badge">🤖 Claude AI</div>
+    <h1>Encuentra tu Carro Ideal</h1>
+    <p>Descríbenos lo que necesitas y la IA te encontrará las mejores opciones en el mercado mexicano</p>
+  </div>
+
+  <div class="rec-card card">
+    <h2>¿Qué estás buscando?</h2>
+    <p>Ejemplo: "Tengo un presupuesto de 400,000 pesos, somos familia de 4, necesito buen rendimiento de combustible para uso diario en ciudad y viajes ocasionales."</p>
+    <div class="field">
+      <label for="nl-input">Describe lo que necesitas</label>
+      <textarea id="nl-input" placeholder="Escribe tus requisitos aquí…"></textarea>
+    </div>
+    <button class="btn-primary" id="rec-btn" onclick="getRecommendations()">
+      <span>✨</span>
+      <span id="rec-btn-text">Obtener Recomendaciones</span>
+      <div class="spinner" id="rec-spinner"></div>
+    </button>
+    <div id="rec-results" class="rec-results hidden"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════ ABOUT PAGE ═══════════════════════════ -->
+<div id="page-about" class="page">
+  <div class="hero" style="padding-bottom:32px">
+    <div class="badge">ℹ️ Acerca de</div>
+    <h1>Car Genie</h1>
+    <p>Plataforma integral de valuación y recomendación de autos para el mercado automotriz mexicano.</p>
+  </div>
+
+  <div class="about-card card">
+    <h2>¿Cómo Funciona?</h2>
+    <div class="about-row">
+      <div class="about-icon">💵</div>
+      <div><strong>Motor de Valuación</strong>Filtra anuncios reales de ~2,400 autos en el mercado mexicano. Estima el valor usando precios medianos ajustados por kilometraje, antigüedad y condición con coincidencia progresiva.</div>
+    </div>
+    <div class="about-row">
+      <div class="about-icon">📉</div>
+      <div><strong>Modelo de Depreciación</strong>Utiliza tasas de depreciación por marca calculadas a partir de datos reales, combinadas con tasas estándar de la industria (metodología KBB / Edmunds). Proyecta el valor hasta 30 años.</div>
+    </div>
+    <div class="about-row">
+      <div class="about-icon">⏱️</div>
+      <div><strong>Mejor Momento para Vender</strong>Identifica el último año en que el carro retiene ≥ 50% de su valor actual, dándote una fecha límite clara con % de retención y valor proyectado.</div>
+    </div>
+    <div class="about-row">
+      <div class="about-icon">🤖</div>
+      <div><strong>Recomendaciones con IA</strong>Impulsado por Claude claude-sonnet-4-6. Analiza tu descripción en lenguaje natural, extrae tus requisitos y devuelve recomendaciones de autos con pros, contras y perspectiva de depreciación.</div>
+    </div>
+    <div class="about-row">
+      <div class="about-icon">🗄️</div>
+      <div><strong>Datos</strong>Anuncios reales extraídos de Supercarros.com y Autos México — 2,397 registros de modelos 2006–2025 en 23 marcas.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ JS ════════════════════════════════ -->
+<script>
+  /* ── Page switcher ── */
+  function switchPage(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    document.getElementById('nav-' + page).classList.add('active');
+  }
+
+  /* ── Cascade: load models when make changes ── */
+  function loadModels() {
+    const make = document.getElementById('make').value;
+    const sel  = document.getElementById('model');
+    sel.innerHTML = '<option value="">Selecciona Modelo</option>';
+    if (!make) return;
+    fetch('/api/models/' + encodeURIComponent(make))
+      .then(r => r.json())
+      .then(list => list.forEach(m => {
+        const o = document.createElement('option');
+        o.value = m; o.textContent = m;
+        sel.appendChild(o);
+      }));
+  }
+
+  /* ── Chart instance ── */
+  let chartInstance = null;
+
+  function renderChart(data) {
+    const labels = data.map(d => d.year);
+    const values = data.map(d => d.value);
+    const colors = data.map(d => d.type === 'projected' ? '#3b82f6' : '#d1d5db');
+    const ctx = document.getElementById('price-chart').getContext('2d');
+    if (chartInstance) chartInstance.destroy();
+    chartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: { labels, datasets: [{ data: values, backgroundColor: colors, borderRadius: 5, borderSkipped: false }] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: c => ' $' + c.raw.toLocaleString() + ' MXN' } }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+          y: { ticks: { callback: v => '$' + (v/1000).toFixed(0) + 'k', font: { size: 11 } }, grid: { color: '#f3f4f6' } }
+        }
+      }
+    });
+  }
+
+  /* ── Best-time-to-sell rows ── */
+  function renderSellRows(rows) {
+    const maxVal = Math.max(...rows.map(r => r.value));
+    document.getElementById('sell-rows').innerHTML = rows.map(row => `
+      <div class="sell-row">
+        <div class="sell-year-col">
+          <span class="sell-year">${row.year}</span>
+          ${row.is_best ? '<span class="sell-badge">Mejor Momento</span>' : ''}
+        </div>
+        <div class="sell-bar-wrap">
+          <div class="sell-bar-track">
+            <div class="sell-bar-fill" style="
+              width:${(row.value / maxVal * 100).toFixed(1)}%;
+              background:${row.is_best ? 'var(--blue)' : '#d1d5db'}">
+            </div>
+          </div>
+          <div class="sell-retention">${row.retention}% retención</div>
+        </div>
+        <div class="sell-prices">
+          <div class="sell-price-main">$${row.value.toLocaleString()}</div>
+          <div class="sell-price-loss">${row.annual_loss > 0 ? '-$' + row.annual_loss.toLocaleString() + '/año' : '—'}</div>
+        </div>
+      </div>`).join('');
+  }
+
+  /* ── Main predict call ── */
+  function predict() {
+    const make      = document.getElementById('make').value;
+    const model     = document.getElementById('model').value;
+    const year      = document.getElementById('year').value;
+    const miles     = document.getElementById('miles').value || 50000;
+    const condition = document.getElementById('condition').value;
+    const fuel_type = document.getElementById('fuel_type').value;
+
+    if (!make || !model || !year) {
+      alert('Por favor selecciona Marca, Modelo y Año.');
+      return;
+    }
+
+    const btn = document.getElementById('predict-btn');
+    btn.disabled = true;
+    document.getElementById('btn-text').textContent = 'Calculando…';
+    document.getElementById('predict-spinner').style.display = 'block';
+
+    fetch('/api/predict', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ make, model, year: +year, miles: +miles, condition, fuel_type })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) { alert('Error: ' + data.error); return; }
+
+      /* Results header */
+      document.getElementById('rh-name').textContent = `${year} ${make} ${model}`;
+      const condMap = { Excellent:'Excelente', Good:'Buena', Fair:'Regular', Poor:'Mala' };
+      document.getElementById('rh-meta').textContent =
+        `${condMap[condition] || condition} · ${Number(miles).toLocaleString()} km${fuel_type ? ' · ' + fuel_type : ''}`;
+      document.getElementById('results-header').classList.remove('hidden');
+
+      /* Metric cards */
+      document.getElementById('m-value').textContent = '$' + data.estimated_value.toLocaleString();
+      document.getElementById('m-range').textContent =
+        'Rango: $' + data.value_range[0].toLocaleString() + ' – $' + data.value_range[1].toLocaleString();
+      document.getElementById('m-conf').textContent  = data.confidence + '%';
+      document.getElementById('m-conf-bar').style.width = data.confidence + '%';
+      document.getElementById('m-depr').textContent = '-' + Math.abs(data.total_depreciation_pct) + '%';
+      document.getElementById('m-loss').textContent = '-$' + Math.abs(data.avg_annual_loss).toLocaleString();
+
+      document.getElementById('metrics-section').classList.remove('hidden');
+      document.getElementById('chart-section').classList.remove('hidden');
+      document.getElementById('sell-section').classList.remove('hidden');
+      document.getElementById('next-car-section').classList.remove('hidden');
+      document.getElementById('brand-watermark').classList.add('faded');
+
+      renderChart(data.chart);
+      renderSellRows(data.best_sell);
+
+      /* Sell recommendation banner */
+      if (data.sell_recommendation) {
+        const sr      = data.sell_recommendation;
+        const urgent  = sr.years_from_now <= 1;
+        const refFmt  = '$' + Math.round(sr.reference_price).toLocaleString() + ' MXN';
+        const src     = data.retail_source === 'zero_mile_inventory'
+          ? 'precio de lista desde inventario'
+          : 'precio de lista estimado';
+        const title   = sr.years_from_now === 0
+          ? 'Vende ahora — ya está por debajo del 60% del precio de lista'
+          : `Vende en ${sr.years_from_now} año${sr.years_from_now > 1 ? 's' : ''} para mantenerte sobre el 60% del precio de lista`;
+        const cross   = sr.crosses_below_year
+          ? `El carro cae por debajo del 60% del precio de lista (${refFmt}) después de ${sr.crosses_below_year}.`
+          : 'El carro se mantiene sobre el 60% del precio de lista durante toda la proyección.';
+        document.getElementById('sell-rec-icon').textContent  = urgent ? '⚠️' : '📅';
+        document.getElementById('sell-rec-title').textContent = title;
+        document.getElementById('sell-rec-desc').textContent  =
+          `Referencia: ${refFmt} (${src}). En ${sr.best_sell_year} el carro retiene ${sr.retention_pct}% ($${sr.value_at_sell.toLocaleString()} MXN). ${cross}`;
+        document.getElementById('sell-rec-year').textContent  = sr.best_sell_year;
+        const banner = document.getElementById('sell-rec-banner');
+        banner.classList.toggle('urgent', urgent);
+        document.getElementById('sell-rec-stat').classList.toggle('urgent', urgent);
+        banner.classList.remove('hidden');
+      }
+
+      /* Scroll results into view */
+      document.getElementById('results-header').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    })
+    .catch(e => alert('Error en la solicitud: ' + e))
+    .finally(() => {
+      btn.disabled = false;
+      document.getElementById('btn-text').textContent = 'Obtener Valuación';
+      document.getElementById('predict-spinner').style.display = 'none';
+    });
+  }
+
+  /* ── Chat-based recommendations on valuation page ── */
+  function sendChatRec() {
+    const input = document.getElementById('chat-input');
+    const text  = input.value.trim();
+    if (!text) return;
+
+    // Append user message to thread
+    const thread = document.getElementById('chat-thread');
+    thread.innerHTML += `<div class="chat-msg user">${text}</div>`;
+    input.value = '';
+
+    // Disable send while loading
+    const btn = document.getElementById('chat-send-btn');
+    btn.disabled = true;
+    document.getElementById('chat-spinner').style.display = 'block';
+    document.getElementById('rec-cards-grid').classList.add('hidden');
+
+    fetch('/api/recommend', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) {
+        thread.innerHTML += `<div class="chat-msg assistant">Lo siento, algo salió mal: ${data.error}</div>`;
+        return;
+      }
+
+      // Brief assistant acknowledgement
+      const count = (data.recommendations || []).length;
+      thread.innerHTML += `<div class="chat-msg assistant">Aquí tienes ${count} opción${count !== 1 ? 'es' : ''} basada${count !== 1 ? 's' : ''} en lo que buscas:</div>`;
+
+      // Render cards
+      const badgeLabels = ['Mejora', 'Eco', 'Económico'];
+      const badgeClasses = ['upgrade', 'eco', 'budget'];
+      const cards = (data.recommendations || []).map((rec, i) => {
+        const labelText  = badgeLabels[i] || `#${rec.rank || i+1}`;
+        const labelClass = badgeClasses[i] || 'default';
+        const price      = rec.estimated_price
+          ? '$' + Number(rec.estimated_price).toLocaleString()
+          : '';
+        const deprStat   = rec.value_analysis
+          ? `<div class="car-rec-stat-item">
+               <span class="car-rec-stat-label">Est. 5yr depreciation</span>
+               <span class="car-rec-stat-value">-${(rec.value_analysis.annual_depreciation_rate * 5).toFixed(0)}%</span>
+             </div>`
+          : '';
+        const mpgOrRange = rec.key_features && rec.key_features.length
+          ? `<div class="car-rec-stat-item">
+               <span class="car-rec-stat-label">Característica clave</span>
+               <span class="car-rec-stat-value">${rec.key_features[0]}</span>
+             </div>`
+          : '';
+        return `
+          <div class="car-rec-card">
+            <span class="car-rec-badge ${labelClass}">${labelText}</span>
+            <div class="car-rec-name">${rec.make || ''} ${rec.model || ''}</div>
+            ${price ? `<div class="car-rec-price">${price}</div>` : ''}
+            <div class="car-rec-why">${rec.why_recommended || ''}</div>
+            ${deprStat || mpgOrRange ? `<div class="car-rec-stats">${deprStat}${mpgOrRange}</div>` : ''}
+          </div>`;
+      }).join('');
+
+      const grid = document.getElementById('rec-cards-grid');
+      grid.innerHTML = cards;
+      grid.classList.remove('hidden');
+
+      // Scroll into view
+      grid.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    })
+    .catch(e => {
+      thread.innerHTML += `<div class="chat-msg assistant">Error en la solicitud: ${e}</div>`;
+    })
+    .finally(() => {
+      btn.disabled = false;
+      document.getElementById('chat-spinner').style.display = 'none';
+    });
+  }
+
+  /* ── AI Recommendations (separate page — kept for nav tab) ── */
+  function getRecommendations() {
+    const text = document.getElementById('nl-input').value.trim();
+    if (!text) { alert('Por favor describe lo que necesitas.'); return; }
+
+    const btn = document.getElementById('rec-btn');
+    btn.disabled = true;
+    document.getElementById('rec-btn-text').textContent = 'Analizando…';
+    document.getElementById('rec-spinner').style.display = 'block';
+    document.getElementById('rec-results').classList.add('hidden');
+
+    fetch('/api/recommend', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) { alert('Error: ' + data.error); return; }
+
+      let html = '';
+
+      /* Extracted profile */
+      if (data.extracted_profile && Object.keys(data.extracted_profile).length) {
+        const items = Object.entries(data.extracted_profile)
+          .map(([k, v]) => `<li><strong>${k.replace(/_/g,' ')}:</strong> ${v}</li>`).join('');
+        html += `<div class="profile-box"><strong>📋 Lo que entendí de tu descripción</strong><ul>${items}</ul></div>`;
+      }
+
+      /* Recommendation cards */
+      (data.recommendations || []).forEach(rec => {
+        const pros  = (rec.pros  || []).slice(0,3).map(p => `<span class="chip pro">✓ ${p}</span>`).join('');
+        const cons  = (rec.cons  || []).slice(0,2).map(c => `<span class="chip con">✕ ${c}</span>`).join('');
+        const price = rec.estimated_price ? '$' + Number(rec.estimated_price).toLocaleString() + ' MXN' : '';
+        const depr  = rec.value_analysis
+          ? `<span class="chip depr">${rec.value_analysis.depreciation_category} depreciation · ${rec.value_analysis.annual_depreciation_rate}%/yr</span>` : '';
+        html += `
+          <div class="rec-item">
+            <div class="rec-header">
+              <span class="rec-rank">#${rec.rank || '?'}</span>
+              <span class="rec-title">${rec.make || ''} ${rec.model || ''}</span>
+              <span class="rec-year">${rec.year_range || ''}</span>
+              <span class="rec-price">${price}</span>
+            </div>
+            <div class="rec-why">${rec.why_recommended || ''}</div>
+            <div class="rec-chips">${pros}${cons}${depr}</div>
+          </div>`;
+      });
+
+      const container = document.getElementById('rec-results');
+      container.innerHTML = html;
+      container.classList.remove('hidden');
+    })
+    .catch(e => alert('Request failed: ' + e))
+    .finally(() => {
+      btn.disabled = false;
+      document.getElementById('rec-btn-text').textContent = 'Obtener Recomendaciones';
+      document.getElementById('rec-spinner').style.display = 'none';
+    });
+  }
+</script>
+</body>
+</html>
