@@ -6,8 +6,6 @@ Funciones para analizar y estimar la depreciación de autos a lo largo del tiemp
 import pandas as pd
 import numpy as np
 from typing import Any, Dict, List, Optional, Tuple
-import matplotlib.pyplot as plt
-import seaborn as sns
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -475,6 +473,7 @@ class CarDepreciationEstimator:
             years: Años a graficar
             save_path: Ruta para guardar la gráfica (opcional)
         """
+        import matplotlib.pyplot as plt
         projection = self.estimate_car_value_over_time(
             initial_price=initial_price,
             make=make,
